@@ -20,6 +20,10 @@
 
 }
 
+.warp {
+	flex-wrap: wrap !important;
+}
+
 .t-r {
 	position: absolute;
     top: 0;

@@ -25,7 +25,12 @@
             <div class="todolist_all-group" id="group-list">
                 {% for group in groups %}
                     <div class="todolist_group" data-id="{{group.group_id}}">
-                        <p class="todolist_group-name">{{group.title}}</p>
+                        <div class="todolist_group-name">
+                            <form action="" method="post">
+
+                                <input type="text" name="" id="" value="{{group.title}}">
+                            </form>
+                        </div>
                     </div>        
                 {% endfor %}
             </div>  
@@ -54,20 +59,32 @@
                 </form>
             </div>
         </div>
-        <div class="gird_col-2">
+         <div class="gird_col-2">
             <div class="task_info">
                 <div class="todolist_task">
-                    <div class="task_status" data-id=abc>
+                    <div class="task_status" data-id="abc">
                         <i class="fa-regular fa-circle"></i>
                     </div>
                     <div class="task_title w-100">ádagdsg</div> 
                 </div>
                 <form action="" method="post">
                     {% csrf_token %}
-                    <label for="">Deadline</label>
+                    <label for="date-picker">Deadline</label>
                     <input type="date" id="date-picker" data-id="task_deadline">
-                    <label for="">Note</label>
-                    <textarea name="task_note" id=""></textarea>
+                    
+                    <label for="task-note">Note</label>
+                    <textarea name="task_note" id="task-note" placeholder="Thêm ghi chú..."></textarea>
+                    
+                    <div class="form-buttons">
+                        <button type="submit" class="btn btn-save">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            Lưu
+                        </button>
+                        <button type="button" class="btn btn-delete">
+                            <i class="fa-solid fa-trash"></i>
+                            Xoá
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
