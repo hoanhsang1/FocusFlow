@@ -1,0 +1,191 @@
+.todolist_container {
+    height: 100vh;
+    display: flex;
+    justify-content: space-between;
+}
+
+.todolist_nav {
+    padding: 0 10px;
+    position: relative;
+}
+
+.todolist_add-task,
+.todolist_add-group,
+.todolist_search {
+    position: relative;
+}
+
+.todolist_add-task i,
+.todolist_add-group i,
+.todolist_search i {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    color: #000;
+    font-size: 16px;
+    z-index: 1;
+    pointer-events: none; /* không cản trở khi click vào input */
+    transition: transform 0.3s ease;
+}
+
+.todolist_add-task input,
+.todolist_add-group input,
+.todolist_search input {
+    display: inline-block;
+    outline: none;
+    border: 1px solid #000;
+    border-radius: 10px;
+    padding: 6px 8px 6px 36px; /* chừa chỗ bên trái cho icon */
+    font-size: var(--text-size);
+    width: 100%;
+
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.todolist_search input:focus-visible {
+    border-color: var(--main-color);
+    box-shadow: 0 0 0 4px rgba(44, 44, 207, 0.3);
+    transform: scale(1.01);
+}
+
+.todolist_group {
+    margin-top: 12px;
+}
+
+.todolist_group-name {
+    margin: 0;
+    padding: 8px 0 8px 24px;
+    position: relative
+}
+
+.todolist_group-name:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.todolist_group-name:hover::before {
+    width: 3px;
+}
+
+.todolist_group-name::before {
+    content: "";
+    display: block;
+    /* Định vị thanh màu tuyệt đối bên trong .text-container */
+    position: absolute;
+    top: 0;
+    left: 0; /* Đặt thanh màu ở bên trái */
+    
+    /* Thiết lập trạng thái ban đầu (ẩn): */
+    height: 100%; /* Chiều cao bằng với chiều cao của dòng chữ */
+    width: 0; /* **Bắt đầu với chiều rộng bằng 0 (ẩn)** */
+    
+    background-color: #007bff; /* Màu xanh bạn muốn */
+    transition: width 0.3s ease
+}
+
+.todolist_add-task i,
+.todolist_add-group i{
+    left: 12px;
+}
+
+
+
+.todolist_search input:focus ~ i {
+    transform: translateY(-50%) scale(1.2);
+}
+.todolist_add-taskForm,
+.todolist_add-groupFrom {
+    position: absolute;
+    bottom: 0;
+    width: 95%;
+}
+
+.gird_col-7 {
+	width: 58.333%;
+}
+
+.todolist_content {
+    height: 100%;
+    width: 100%;
+    position: relative;
+    padding: 16px 26px;
+    background-color: rgb(23, 23, 80);
+    /* overflow: hidden; */
+}
+
+.todolist_img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;        /* phủ full không vỡ */
+    object-position: center center;  /* canh giữa */
+    z-index: -1;  
+}
+
+.todolist_title {
+    font-size: 42px;
+    color: #fff;
+    font-weight: 700;
+}
+
+.todolist_day {
+
+}
+
+.todolist_groupTasks {
+
+}
+
+.todolist_add-task {
+
+}
+
+.todolist_title {
+
+}
+
+.task_status {
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.task_title {
+    display: inline-block;
+}
+
+.todolist_task {
+    background-color: #fff;
+    margin-top: 8px;
+    border-radius: 5px;
+    padding: 12px;
+    border: 1px solid #ccc;
+}
+
+.task_info {
+    padding: 20px 12px 0 12px;
+}
+
+.task_info .todolist_task {
+
+}
+
+.task_info {
+
+}
+
+.task_info {
+    
+}
+
+.task_info {
+    
+}
+
+.task_info input {
+
+}
+

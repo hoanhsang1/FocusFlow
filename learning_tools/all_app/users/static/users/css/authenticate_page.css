@@ -1,0 +1,53 @@
+.modal_authenticate {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Roboto';
+}
+
+.modal_authenticate-content {
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 0 10px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.02);
+}
+
+.modal_authenticate-tital {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.authenticate_form {
+
+}
+
+.authenticate_form label {
+    display: block;
+    margin: 14px 0px;
+    font-size: 18px;
+}
+
+.authenticate_form p {
+    margin-bottom: 40px;
+}
+
+.authenticate_form input {
+    font-size: 18px;
+    padding: 10px;
+    width: 100%;
+}
+
+.authenticate_form button {
+
+}
+
+.error_authenticate {
+    background-color: rgba(255, 0, 0, 0.4);
+    padding: 16px;
+    width: 100%;
+    color: #000;
+    font-weight: 500;
+}

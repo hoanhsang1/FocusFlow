@@ -1,0 +1,126 @@
+* {
+	box-sizing: border-box;
+	font-size: 16px;
+}
+
+.center {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.left {
+	justify-content:left;
+
+}
+
+.right {
+	display: flex;
+	justify-content:right;
+
+}
+
+.t-r {
+	position: absolute;
+    top: 0;
+    right: 0;
+}
+
+@font-face {
+  	font-family: 'Roboto';
+ 	src: url(../../static/font/Roboto/Roboto-VariableFont_wdth\,wght.ttf) format('truetype');
+}
+
+.show {
+  	display: block !important;
+}
+
+.hide {
+  	display: none !important;
+}
+
+.w-100 {
+  	width: 100%;
+}
+
+.text-blue {
+  	color: #04BAEE; 
+}
+
+.bg-blue {
+  	background-color: #04BAEE;
+}
+
+.btn {
+	border: none;
+	outline: none;
+	padding: 8px 16px;
+	color: #fff;
+	background-color: #04BAEE;
+}
+
+.modal_close {
+	display: inline-block;
+    background-color: red;
+}
+
+.modal_close i {
+	width: 46px;
+    height: 46px;
+    font-size: 26px;
+    display: inline-block;
+    color: #ffff;
+    line-height: 46px;
+    text-align: center;
+}
+
+.gird_col-2 {
+	width: 16.6666%;
+}
+
+.gird_col-2-5 {
+	width: 20.8333%;
+}
+
+.gird_col-4 {
+	width: 33.3333%;
+}
+
+.gird_col-6 {
+	width: 50%;
+}
+
+.gird_col-7 {
+	width: 58.3333%;
+}
+
+.gird_col-8 {
+	width: 66.6666%;
+}
+
+.gird_col-9-5 {
+	width: 76.1666%;
+}
+
+.gird_col-10 {
+	width: 83.3333%;
+}
+
+.gird_col-10-5 {
+	width: 87.4999%;
+}
+
+.gird_col-3 {
+	width: 25%;
+}
+
+
+.row {
+	display: flex;
+	justify-content: space-around;
+}
+
+.active {
+	background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+}

@@ -1,0 +1,30 @@
+<h2 class="tital">Chỉnh sửa thông tin sinh viên</h2>
+<form method="POST" class="form_edit-user">
+    {% csrf_token %}
+    <label>Username:</label>
+    <input type="text" name="username" value="{{ student.username }}"><br>
+
+    <label>Password:</label>
+    <input type="text" name="password" value="{{ student.password }}"><br>
+
+    <label>Họ tên:</label>
+    <input type="text" name="ho_ten" value="{{ student.ho_ten }}"><br>
+
+    <label>Email:</label>
+    <input type="email" name="email" value="{{ student.email }}"><br>
+
+    <label>Số điện thoại:</label>
+    <input type="text" name="sdt" value="{{ student.sdt }}"><br>
+
+    <label>CCCD:</label>
+    <input type="text" name="cccd" value="{{ student.cccd }}"><br>
+
+    <label>Vai trò:</label>
+    <input type="text" name="vai_tro" value="{{ student.vai_tro }}"><br>
+
+    <button type="submit" class="btn">Lưu thay đổi</button>
+
+    <a href="{% url 'phongdaotao:delete_student' user_id=student.user_id %}" class="btn btn-danger">
+    Xoá mềm
+    </a>
+</form>

@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static "css/base.css" %}">
+    <link rel="stylesheet" href="{% static "css/rest.css"  %}">
+    <link rel="stylesheet" href="{% static "fontawesome-free-6.7.2-web/css/all.css"  %}">
+    <link rel="stylesheet" href="{% static "bootstrap-5.3.8-dist/css/bootstrap.css"  %}">
+    <link rel="stylesheet" href="{% static "to_do_list_css/home.css" %}">
+    <title>To Do List</title>
+</head>
+<body>
+    <div class="todolist_container">
+        <div class="gird_col-2 todolist_nav">
+            <form action="" method="post">
+                {% csrf_token %}
+                <div class="todolist_search">
+                    <input class="" id="" type="text" name="find_groups" placeholder="Search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    
+                </div>
+            </form>
+            <div class="todolist_all-group" id="group-list">
+                {% for group in groups %}
+                    <div class="todolist_group" data-id="{{group.group_id}}">
+                        <p class="todolist_group-name">{{group.title}}</p>
+                    </div>        
+                {% endfor %}
+            </div>  
+            <form class="todolist_add-groupFrom" onsubmit="addGroup(event)" method="post" name="add_group-form">
+                {% csrf_token %}
+                <div class="todolist_add-group">
+                    <i class="fa-solid fa-plus"></i>
+                    <input type="text" name="add_group" id="group-name" placeholder="New group">
+                </div>
+            </form>
+        </div>
+        <div class="gird_col-8">
+            <div class="todolist_content">  
+                <!-- <img src="../../static/to_do_list_img/a.jpg" alt="" class="todolist_img"> -->
+                <div class="todolist_title">Tasks</div>
+                <div class="todolist_day"></div>
+                <div class="todolist_groupTasks" id="taskList" data-id="">
+                    
+                </div>
+                <form class="todolist_add-taskForm" onsubmit="addTask(event)" method="post">
+                    {% csrf_token %}
+                    <div class="todolist_add-task">
+                        <i class="fa-solid fa-plus"></i>
+                        <input type="text" name="add_task" id="task-name" placeholder="Add a task">
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="gird_col-2">
+            <div class="task_info">
+                <div class="todolist_task">
+                    <div class="task_status" data-id=abc>
+                        <i class="fa-regular fa-circle"></i>
+                    </div>
+                    <div class="task_title w-100">ádagdsg</div> 
+                </div>
+                <form action="" method="post">
+                    {% csrf_token %}
+                    <label for="">Deadline</label>
+                    <input type="date" id="date-picker" data-id="task_deadline">
+                    <label for="">Note</label>
+                    <textarea name="task_note" id=""></textarea>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+    <script src="{% static 'to_do_list_js/add_element.js'%}"></script>
+</html>

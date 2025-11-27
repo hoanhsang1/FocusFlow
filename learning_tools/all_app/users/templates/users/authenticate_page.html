@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <link rel="stylesheet" href="{% static "users/css/authenticate_page.css" %}">
+     <link rel="stylesheet" href="{% static 'css/rest.css' %}">
+    <link rel="stylesheet" href="{% static 'fontawesome-free-6.7.2-web/css/all.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <title>Document</title>
+</head>
+<body>
+    <div class="modal_authenticate">
+        <div class="modal_authenticate-content">
+            {% if page == "login" %}
+                {% include "users/login.html" %}
+            {% elif page == "register" %}
+                {% include "users/register.html" %}
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
