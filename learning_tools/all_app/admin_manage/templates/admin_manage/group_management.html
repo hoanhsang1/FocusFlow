@@ -1,0 +1,74 @@
+{% extends 'admin_manage/base.html' %}
+
+{% block page_title %}Group Management{% endblock %}
+
+{% block content %}
+<div class="data-table">
+    <div class="table-header">
+        <h3>All Groups ({{ total_groups }})</h3>
+        <div class="search-box">
+            <form method="GET" style="display: flex; gap: 10px;">
+                <input type="text" name="search" placeholder="Search groups..." value="{{ search_query }}">
+                <select name="status" onchange="this.form.submit()">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                    <option value="deleted" {% if status_filter == 'deleted' %}selected{% endif %}>Deleted</option>
+                </select>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Group Name</th>
+                <th>Owner</th>
+                <th>Created Date</th>
+                <th>Tasks</th>
+                <th>Completed</th>
+                <th>Pending</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for group in groups %}
+            <tr>
+                <td>
+                    <strong>{{ group.title }}</strong>
+                    {% if group.description %}
+                    <br><small>{{ group.description|truncatewords:10 }}</small>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if group.todolist and group.todolist.user %}
+                        {{ group.todolist.user.username }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>{{ group.created_at|date:"M d, Y" }}</td>
+                <td>{{ group.task_count|default:0 }}</td>
+                <td>{{ group.completed_tasks|default:0 }}</td>
+                <td>{{ group.pending_tasks|default:0 }}</td>
+                <td>
+                    {% if group.is_deleted %}
+                    <span class="status-badge status-deleted">Deleted</span>
+                    {% else %}
+                    <span class="status-badge status-active">Active</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 30px; color: #6c757d;">
+                    No groups found
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

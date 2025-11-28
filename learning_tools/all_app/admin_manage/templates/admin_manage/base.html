@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FocusFlow Admin Manage{% endblock %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+     <link rel="stylesheet" href="{% static "admin_css/home.css" %}">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <div class="admin-sidebar">
+            <div class="sidebar-header">
+                <h1>🏠 FocusFlow</h1>
+                <p>Admin Management</p>
+            </div>
+            
+            <ul class="admin-nav">
+                <li><a href="{% url 'admin_manage:admin_manage_dashboard' %}" class="{% if request.path == '/admin_manage/dashboard/' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a></li>
+                <li><a href="{% url 'admin_manage:admin_manage_users' %}" class="{% if 'users' in request.path %}active{% endif %}">
+                    <i class="fas fa-users"></i> User Management
+                </a></li>
+                <li><a href="{% url 'admin_manage:admin_manage_groups' %}" class="{% if 'groups' in request.path %}active{% endif %}">
+                    <i class="fas fa-folder"></i> Group Management
+                </a></li>
+                <li><a href="{% url 'admin_manage:admin_manage_tasks' %}" class="{% if 'tasks' in request.path %}active{% endif %}">
+                    <i class="fas fa-tasks"></i> Task Management
+                </a></li>
+                <li><a href="{% url 'admin_manage:admin_manage_analytics' %}" class="{% if 'analytics' in request.path %}active{% endif %}">
+                    <i class="fas fa-chart-bar"></i> Analytics
+                </a></li>
+                <li><a href="{% url 'admin_manage:admin_manage_system' %}" class="{% if 'system' in request.path %}active{% endif %}">
+                    <i class="fas fa-cog"></i> System Info
+                </a></li>
+                <li><a href="/admin/" target="_blank">
+                    <i class="fas fa-external-link-alt"></i> Django Admin
+                </a></li>
+                
+            </ul>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="admin-content">
+            <div class="content-header">
+                <h1>{% block page_title %}Admin Dashboard{% endblock %}</h1>
+                <div class="user-info">
+                    <div class="user-avatar">
+                        {{ request.user.username|first|upper }}
+                    </div>
+                    <div>
+                        <strong>{{ request.user.username }}</strong>
+                        <div style="font-size: 0.8em; color: #6c757d;">Super Admin</div>
+                    </div>
+                </div>
+            </div>
+            
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+</body>
+</html>

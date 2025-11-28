@@ -2,6 +2,7 @@ from django.shortcuts import render
 from all_app.users.check_login_role import *
 from .to_do_list_models import *
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 # Create your views here.
 
 @role_required('user')
@@ -147,7 +148,7 @@ def edit_taskInfo(request, taskID):
         task = Task.objects.get(task_id=taskID)
         
         task.title = request.POST.get("title")
-        task.description = request.POST.get("task-note")
+        task.description = request.POST.get("task_note")
         task.deadline = request.POST.get("deadline")
         task.save()
         return JsonResponse({"success": True, "message": "Cập nhật thành công"})
@@ -155,28 +156,72 @@ def edit_taskInfo(request, taskID):
         return JsonResponse({"error": "Group not found"}, status=404)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+ 
+def edit_group(request, groupID):
+    if request.method != "GET":
+        return JsonResponse({"error": "Use GET method"}, status=400)
     
-# def edit_group(request, taskID):
-#     if request.method != "POST":
-#         return JsonResponse({"error": "Invalid method"}, status=400)
-#     try:
-#         if taskID == 'undefined' or not taskID:
-#             return JsonResponse({"error": "Invalid group ID"}, status=400)
-            
-#         task = Task.objects.get(task_id=taskID)
+    try:
+        title = request.GET.get("title", "").strip()
+        group = ToDoListGroup.objects.get(group_id=groupID)
         
-#         task.title = request.POST.get("title")
-#         task.description = request.POST.get("task-note")
-#         task.deadline = request.POST.get("deadline")
-#         task.save()
-#         return JsonResponse({"success": True, "message": "Cập nhật thành công"})
-#     except Task.DoesNotExist:
-#         return JsonResponse({"error": "Group not found"}, status=404)
-#     except Exception as e:
-#         return JsonResponse({"error": str(e)}, status=500)
+        if title == '':
+            group.is_deleted = True
+            group.save()
+            return JsonResponse({"success": True, "deleted": True})
+        else:
+            group.title = title
+            group.save()
+            return JsonResponse({"success": True, "title": group.title})
+        
+    except Exception as e:
+        # Trả về JSON error thay vì HTML error page
+        return JsonResponse({"success": False, "error": str(e)})
+
     
 def soft_delete_task(request,taskID):
     task = Task.objects.get(task_id=taskID)
     task.is_deleted = True
     task.save()
     return JsonResponse({"success": True, "message": "Xoá thành công"})
+
+def search_groups(request):
+    if request.method == "GET":
+        search_query = request.GET.get('q', '').strip()
+
+        user_id = request.session.get("user_id")
+        if not user_id:
+            return JsonResponse({'success': False, 'error': 'User not logged in'}, status=401)
+        
+        try:
+            todo = ToDoList.objects.get(user_id=user_id)
+        except ToDoList.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Todo list not found'}, status=404)
+        
+        # Lấy groups theo search query
+        if search_query:
+            groups = ToDoListGroup.objects.filter(
+                todolist = todo,
+                title__icontains=search_query,
+                is_deleted=False
+            )
+        else:
+            groups = ToDoListGroup.objects.filter(is_deleted=False, todolist = todo)
+        
+        # Chuẩn bị dữ liệu JSON
+        groups_data = []
+        for group in groups:
+            groups_data.append({
+                'group_id': group.group_id,
+                'title': group.title
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'groups': groups_data,
+            'search_query': search_query,
+            'count': len(groups_data)
+        })
+    
+    return JsonResponse({'success': False, 'error': 'Invalid method'}, status=400)

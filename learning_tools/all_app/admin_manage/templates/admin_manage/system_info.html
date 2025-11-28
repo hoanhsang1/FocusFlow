@@ -1,0 +1,92 @@
+{% extends 'admin_manage/base.html' %}
+
+{% block page_title %}System Information{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3><i class="fas fa-code"></i> Python Version</h3>
+        <div style="font-size: 1.2em; font-weight: bold; color: #2c3e50;">
+            {{ system_info.python_version|truncatewords:3 }}
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <h3><i class="fas fa-cube"></i> Django Version</h3>
+        <div style="font-size: 1.2em; font-weight: bold; color: #2c3e50;">
+            {{ system_info.django_version }}
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <h3><i class="fas fa-desktop"></i> Platform</h3>
+        <div style="font-size: 1.2em; font-weight: bold; color: #2c3e50;">
+            {{ system_info.platform }}
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <h3><i class="fas fa-bug"></i> Debug Mode</h3>
+        <div style="font-size: 1.2em; font-weight: bold; color: #2c3e50;">
+            {% if system_info.debug_mode %}
+            <span style="color: #dc3545;">ENABLED</span>
+            {% else %}
+            <span style="color: #28a745;">DISABLED</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="activity-list">
+    <h3 style="margin-bottom: 20px; color: #2c3e50;">System Configuration</h3>
+    
+    <div class="activity-item">
+        <div class="activity-info">
+            <strong>Database Engine</strong>
+        </div>
+        <div class="activity-time">
+            {{ system_info.database_engine }}
+        </div>
+    </div>
+    
+    <div class="activity-item">
+        <div class="activity-info">
+            <strong>Time Zone</strong>
+        </div>
+        <div class="activity-time">
+            {{ system_info.time_zone }}
+        </div>
+    </div>
+    
+    <div class="activity-item">
+        <div class="activity-info">
+            <strong>Allowed Hosts</strong>
+        </div>
+        <div class="activity-time">
+            {{ system_info.allowed_hosts|join:", " }}
+        </div>
+    </div>
+</div>
+
+<div class="activity-list">
+    <h3 style="margin-bottom: 20px; color: #2c3e50;">Quick Actions</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+        <a href="/admin/" target="_blank" class="btn btn-primary" style="text-align: center; display: block;">
+            <i class="fas fa-cog"></i> Django Admin
+        </a>
+        
+        <a href="{% url 'admin_manage:admin_manage_dashboard' %}" class="btn btn-primary" style="text-align: center; display: block;">
+            <i class="fas fa-tachometer-alt"></i> Dashboard
+        </a>
+        
+        <a href="{% url 'admin_manage:admin_manage_users' %}" class="btn btn-primary" style="text-align: center; display: block;">
+            <i class="fas fa-users"></i> User Management
+        </a>
+        
+        <a href="{% url 'admin_manage:admin_manage_analytics' %}" class="btn btn-primary" style="text-align: center; display: block;">
+            <i class="fas fa-chart-bar"></i> Analytics
+        </a>
+    </div>
+</div>
+{% endblock %}

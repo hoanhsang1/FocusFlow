@@ -1,0 +1,104 @@
+{% extends 'admin_manage/base.html' %}
+
+{% block page_title %}System Analytics{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3><i class="fas fa-chart-line"></i> Daily Tasks (30 days)</h3>
+        <div class="stat-number">{{ daily_tasks|length }}</div>
+        <small>From {{ start_date }} to {{ end_date }}</small>
+    </div>
+    
+    <div class="stat-card">
+        <h3><i class="fas fa-tasks"></i> Task Distribution</h3>
+        <div class="stat-number">{{ status_distribution|length }}</div>
+        <small>By status categories</small>
+    </div>
+    
+    <div class="stat-card">
+        <h3><i class="fas fa-users"></i> Top Users</h3>
+        <div class="stat-number">{{ user_activity|length }}</div>
+        <small>Most active users</small>
+    </div>
+    
+    <div class="stat-card">
+        <h3><i class="fas fa-trophy"></i> Top Groups</h3>
+        <div class="stat-number">{{ group_completion|length }}</div>
+        <small>By completion rate</small>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+    <!-- Task Status Distribution -->
+    <div class="activity-list">
+        <h3 style="margin-bottom: 20px; color: #2c3e50;">Task Status Distribution</h3>
+        {% for stat in status_distribution %}
+        <div class="activity-item">
+            <div class="activity-info">
+                <strong>{{ stat.status|title }}</strong>
+            </div>
+            <div class="activity-time">
+                {{ stat.count }} tasks
+            </div>
+        </div>
+        {% empty %}
+        <p style="text-align: center; color: #6c757d; padding: 20px;">No status data</p>
+        {% endfor %}
+    </div>
+
+    <!-- Top Active Users -->
+    <div class="activity-list">
+        <h3 style="margin-bottom: 20px; color: #2c3e50;">Top Active Users</h3>
+        {% for user in user_activity %}
+        <div class="activity-item">
+            <div class="activity-info">
+                <strong>{{ user.username }}</strong>
+                <div style="font-size: 0.9em; color: #6c757d;">
+                    {{ user.task_count }} tasks • {{ user.group_count }} groups
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p style="text-align: center; color: #6c757d; padding: 20px;">No user activity data</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Group Completion Rates -->
+<div class="activity-list">
+    <h3 style="margin-bottom: 20px; color: #2c3e50;">Group Completion Rates</h3>
+    {% for group in group_completion %}
+    <div class="activity-item">
+        <div class="activity-info">
+            <strong>{{ group.title }}</strong>
+            <div style="font-size: 0.9em; color: #6c757d;">
+                {{ group.completed_tasks }}/{{ group.total_tasks }} tasks completed
+            </div>
+        </div>
+        <div class="activity-time">
+            {{ group.completion_rate|floatformat:1 }}%
+        </div>
+    </div>
+    {% empty %}
+    <p style="text-align: center; color: #6c757d; padding: 20px;">No group completion data</p>
+    {% endfor %}
+</div>
+
+<!-- Daily Task Activity -->
+<div class="activity-list">
+    <h3 style="margin-bottom: 20px; color: #2c3e50;">Daily Task Activity (Last 30 Days)</h3>
+    {% for day in daily_tasks %}
+    <div class="activity-item">
+        <div class="activity-info">
+            <strong>{{ day.date|date:"M d, Y" }}</strong>
+        </div>
+        <div class="activity-time">
+            {{ day.count }} tasks created
+        </div>
+    </div>
+    {% empty %}
+    <p style="text-align: center; color: #6c757d; padding: 20px;">No daily activity data</p>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -19,9 +19,18 @@ function addGroup(event) {
         // Thêm group mới vào giao diện (dùng data trả về từ backend)
         const list = document.getElementById("group-list");
         list.innerHTML += `
-            <div class="todolist_group" data-id="${data.id}>
-                <p class="todolist_group-name">${data.title}</p>
-            </div>
+            <div class="todolist_group" data-id="${data.id}">
+                        <div class="todolist_group-name">
+                            <form onsubmit="return false;">
+
+                                <input type="text" 
+                                    name="title"
+                                    value="${data.title}" 
+                                    onblur="edit_group(this, ${data.id}')"
+                                    onkeypress="if(event.keyCode===13) this.blur()">
+                            </form>
+                        </div>
+                    </div>
         `;
 
         // Xóa input
@@ -61,12 +70,22 @@ function addTask(event) {
 }   
 
 
+// ĐẢM BẢO HÀM getCookie HOẠT ĐỘNG ĐÚNG
 function getCookie(name) {
-    return document.cookie.split("; ")
-        .find(row => row.startsWith(name + "="))
-        ?.split("=")[1];
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    console.log(`Cookie '${name}':`, cookieValue);
+    return cookieValue;
 }
-
 // change status
 function changeStatus(classTask) {
     document.getElementById(classTask).addEventListener('click', function(event) {
@@ -76,8 +95,6 @@ function changeStatus(classTask) {
             let taskId = clickedElement.dataset.id;
             
             if (taskId && taskId.trim() !== "") {
-                // Tùy chọn: Thêm một hiệu ứng loading
-                // clickedElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
 
                 fetch(`/todolist/change_status/${taskId}/`, {
                     method: 'POST',
@@ -86,10 +103,7 @@ function changeStatus(classTask) {
                     }
                 })
                 .then(res => {
-                    // *** LOẠI BỎ hoặc sửa đổi khối kiểm tra lỗi này ***
-                    // Lý do: Khi Django trả về 200 OK với HTML icon, res.ok là TRUE.
-                    //        Khối này sẽ bị bỏ qua.
-                    //        Nếu có lỗi thực sự (ví dụ: 404, 500), nó sẽ được catch ở .catch() bên dưới
+                    
                     if (!res.ok) { // Nếu có lỗi HTTP status code (ví dụ: 404, 500)
                         return res.text().then(text => { // Vẫn đọc response text để log lỗi chi tiết
                             throw new Error(`Server error: ${res.status} - ${text}`);
@@ -104,7 +118,7 @@ function changeStatus(classTask) {
                 })
                 .catch(err => {
                     console.error('Lỗi khi thay đổi trạng thái task:', err);
-                    // Bạn có thể giữ alert này để xử lý các lỗi thực sự
+                    //có thể giữ alert này để xử lý các lỗi thực sự
                     alert('Không thể cập nhật trạng thái: ' + err.message);
                 });
             } else {
@@ -121,7 +135,7 @@ function updateClickEvent() {
             console.log("hello")
             fetch(`/todolist/get_taskInfo/${taskID}/`) 
                 .then(res => {
-                    if (!res.ok) { // Rất quan trọng: Xử lý lỗi HTTP status (ví dụ: 404, 500)
+                    if (!res.ok) { // Xử lý lỗi HTTP status (ví dụ: 404, 500)
                             return res.text().then(text => { // Lấy thông báo lỗi từ server nếu có
                                 throw new Error(`Server error: ${res.status} - ${text}`);
                             });
@@ -150,11 +164,11 @@ function updateClickEvent() {
                             <div class="form-buttons">
                                 <button type="submit" class="btn btn-save" onclick="edit_taskInfo(this.closest('form'), '${task.id}')" data-id="${task.task_id}">
                                     <i class="fa-solid fa-floppy-disk"></i>
-                                    Lưu
+                                    Save
                                 </button>
                                 <button type="button" onclick="soft_delete_task('${task.id}')" class="btn btn-delete" data-id="${task.task_id}">
                                     <i class="fa-solid fa-trash"></i>
-                                    Xoá
+                                    Delete
                                 </button>
                             </div>
                     </form>
@@ -187,15 +201,62 @@ function reloadSingleTask(taskID) {
         })
 }
 
+// HÀM RELOAD CHỈ 1 group
+function reloadSingleTask(groupID) {
+    // Gọi API lấy thông tin task mới
+    fetch(`/todolist/edit_group/${groupID}/`)
+        .then(response => response.json())
+        .then(updatedTask => {
+            // Tìm task element cần update
+            const groupElement = document.querySelector(`.todolist_group[data-id="${groupID}"]`);
+            
+            if (groupElement) {
+                // Cập nhật tiêu đề
+                const titleElement = groupElement.querySelector('.task_title');
+                if (titleElement) {
+                    titleElement.textContent = updatedTask.title;
+                }
+                console.log('Đã cập nhật task:', groupID);
+            }
+        })
+}
+
 function removeTaskFromUI(taskID) {
     // Tìm và xóa task element
     const taskElement = document.querySelector(`.todolist_task[data-id="${taskID}"]`);
     if (taskElement) {
         taskElement.remove();
     }
+}
+
+// HÀM RELOAD CHỈ 1 GROUP
+function reloadSingleGroup(groupID) {
+    fetch(`/todolist/get_group_info/${groupID}/`)
+        .then(response => response.json())
+        .then(updatedGroup => {
+            const groupElement = document.querySelector(`.todolist_group[data-id="${groupID}"]`);
+            
+            if (groupElement) {
+                // Cập nhật tiêu đề
+                const inputElement = groupElement.querySelector('input[type="text"]');
+                if (inputElement) {
+                    inputElement.value = updatedGroup.title;
+                }
+                console.log('Đã cập nhật group:', groupID);
+            }
+        })
+        .catch(error => console.error('Error reloading group:', error));
+}
+
+function removeGroupFromUI(groupID) {
+    const groupElement = document.querySelector(`.todolist_group[data-id="${groupID}"]`);
+    if (groupElement) {
+        groupElement.remove();
+        console.log('Đã xóa group khỏi UI:', groupID);
+    }
     
-    // Hoặc reload toàn bộ task list
-    // reloadTaskList();
+    // Nếu đang xem tasks của group bị xóa, clear task info
+    document.querySelector('.task_info').innerHTML = '';
 }
 
 // show task list when click group
@@ -210,7 +271,7 @@ function clickGroup () {
                 // URL đã khớp với urls.py (có '/' cuối)
                 fetch(`/todolist/get_tasks/${groupId}/`) 
                     .then(res => {
-                        if (!res.ok) { // Rất quan trọng: Xử lý lỗi HTTP status (ví dụ: 404, 500)
+                        if (!res.ok) { //Xử lý lỗi HTTP status (ví dụ: 404, 500)
                             return res.text().then(text => { // Lấy thông báo lỗi từ server nếu có
                                 throw new Error(`Server error: ${res.status} - ${text}`);
                             });
@@ -237,7 +298,7 @@ function clickGroup () {
                     })
                     .catch(err => {
                         console.error('Lỗi khi tải tasks:', err);
-                        // Hiển thị thông báo lỗi thân thiện cho người dùng
+                        // Hiển thị thông báo lỗi
                         document.getElementById("taskList").innerHTML = `<li style="color: red;">Lỗi khi tải danh sách công việc: ${err.message || 'Không rõ lỗi'}</li>`;
                     });
             } else {
@@ -297,6 +358,26 @@ function edit_taskInfo(formElement, taskID) {
     });
 }
 
+function edit_group(inputElement, groupID) {
+    const title = inputElement.value.trim();
+
+    if (!title) {
+        if (!confirm('Xóa group?')) return;
+    }
+
+    // Tạo URL và chuyển hướng (hoặc dùng fetch)
+    const url = `/todolist/edit_group/${groupID}/?title=${encodeURIComponent(title)}`;
+    
+    // Cách 1: Dùng fetch
+    fetch(url)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.deleted) removeGroupFromUI(groupID);
+        } else alert('Lỗi: ' + data.error);
+    })
+    .catch(error => console.error('Error:', error));
+}
 
 function soft_delete_task(taskID) {
     // 1. Lấy CSRF token từ cookie để bảo mật
@@ -338,4 +419,45 @@ function soft_delete_task(taskID) {
         console.error('Error:', error);
         alert('Lỗi khi xoá dữ liệu');
     });
+}
+
+function searchGroups() {
+    const searchInput = document.querySelector('input[name="q"]'); // ĐỊNH NGHĨA searchInput
+    const searchQuery = searchInput.value;
+    
+    fetch(`/todolist/search_groups/?q=${encodeURIComponent(searchQuery)}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            renderGroups(data.groups);
+        }
+    })
+    .catch(error => console.error('Search error:', error));
+}
+
+function renderGroups(groups) {
+    const groupList = document.getElementById('group-list');
+    let html = '';
+    
+    if (groups.length === 0) {
+        html = `<div class="no-results">Không tìm thấy nhóm nào</div>`;
+    } else {
+        groups.forEach(group => {
+            html += `
+                <div class="todolist_group" data-id="${group.group_id}">
+                    <div class="todolist_group-name">
+                        <form onsubmit="return false;">
+                            <input type="text" 
+                                   name="title"
+                                   value="${group.title}" 
+                                   onblur="edit_group(this, '${group.group_id}')"
+                                   onkeypress="if(event.keyCode===13) this.blur()">
+                        </form>
+                    </div>
+                </div>`;
+        });
+    }
+    
+    groupList.innerHTML = html;
+    clickGroup(); // Thêm event listeners lại
 }

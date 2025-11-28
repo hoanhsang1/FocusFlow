@@ -41,7 +41,7 @@ def check_login(request):
             request.session['user_id'] = user.user_id
             request.session['role'] = user.role
             if user.get_role() == "admin":
-                return redirect('admin_manage:admin_home')
+                return redirect('admin_manage:admin_manage_dashboard')
             else:
                 return redirect('to_do_list:home')
         else:

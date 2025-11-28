@@ -17,7 +17,10 @@
             <form action="" method="post">
                 {% csrf_token %}
                 <div class="todolist_search">
-                    <input class="" id="" type="text" name="find_groups" placeholder="Search">
+                    <input  type="text" 
+                            name="q" 
+                            placeholder="Search groups..."
+                            onkeyup="searchGroups()">
                     <i class="fa-solid fa-magnifying-glass"></i>
                     
                 </div>
@@ -26,9 +29,13 @@
                 {% for group in groups %}
                     <div class="todolist_group" data-id="{{group.group_id}}">
                         <div class="todolist_group-name">
-                            <form action="" method="post">
+                            <form onsubmit="return false;">
 
-                                <input type="text" name="" id="" value="{{group.title}}">
+                                <input type="text" 
+                                    name="title"
+                                    value="{{group.title}}" 
+                                    onblur="edit_group(this, '{{group.group_id}}')"
+                                    onkeypress="if(event.keyCode===13) this.blur()">
                             </form>
                         </div>
                     </div>        
@@ -61,31 +68,7 @@
         </div>
          <div class="gird_col-2">
             <div class="task_info">
-                <div class="todolist_task">
-                    <div class="task_status" data-id="abc">
-                        <i class="fa-regular fa-circle"></i>
-                    </div>
-                    <div class="task_title w-100">ádagdsg</div> 
-                </div>
-                <form action="" method="post">
-                    {% csrf_token %}
-                    <label for="date-picker">Deadline</label>
-                    <input type="date" id="date-picker" data-id="task_deadline">
-                    
-                    <label for="task-note">Note</label>
-                    <textarea name="task_note" id="task-note" placeholder="Thêm ghi chú..."></textarea>
-                    
-                    <div class="form-buttons">
-                        <button type="submit" class="btn btn-save">
-                            <i class="fa-solid fa-floppy-disk"></i>
-                            Lưu
-                        </button>
-                        <button type="button" class="btn btn-delete">
-                            <i class="fa-solid fa-trash"></i>
-                            Xoá
-                        </button>
-                    </div>
-                </form>
+                
             </div>
         </div>
     </div>
