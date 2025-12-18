@@ -10,13 +10,14 @@ from django.views.decorators.http import require_POST
 import json
 # Create your views here.
 
+
 @role_required('user')
 def get_home(request):
     user_id = request.session.get('user_id')
     try:
         flashcard = Flashcard.objects.get(user_id=user_id)
     except Flashcard.DoesNotExist:
-        return redirect('set+up_todolist')
+        return redirect('users:login_form')
     set = (
         FlashcardSet.objects
         .filter(flashcard=flashcard, is_deleted=False)
@@ -36,6 +37,7 @@ def generate_set_id():
     number = int(last_set.set_id[3:]) + 1
     return f"SET{number:04d}"
 
+@role_required('user')
 def add_set(request, flashcard_id):
     if request.method != 'POST':
         return JsonResponse({"error": "Invalid method"}, status=400)
@@ -55,6 +57,7 @@ def add_set(request, flashcard_id):
         print(f"Lỗi khi tạo set: {e}") 
         return JsonResponse({"error": "Failed to create set or invalid Flashcard ID."}, status=400)
     
+@role_required('user')
 def get_card(request, setID):
     if request.method != 'GET':
         return JsonResponse({"error": "Invalid method"}, status=400)
@@ -72,6 +75,7 @@ def get_card(request, setID):
     
     return JsonResponse(data, safe=False)
 
+
 def generate_card_id():
     last_card = FlashcardItem.objects.order_by('-card_id').first()
     if not last_card:
@@ -79,6 +83,7 @@ def generate_card_id():
     number = int(last_card.card_id[4:]) + 1
     return f"CARD{number:04d}"
 
+@role_required('user')
 def add_card(request,setID):
     if request.method !="POST":
         return JsonResponse({"error": "Invalid method"}, status=405)
@@ -106,6 +111,7 @@ def add_card(request,setID):
             "card": model_to_dict(newCard, fields=['card_id', 'question', 'answer', 'set_id'])
         }, status=201)
 
+@role_required('user')
 def edit_card(request,cardID):
     if request.method !="POST":
         return JsonResponse({"error": "Invalid method"}, status=405)
@@ -132,6 +138,7 @@ def edit_card(request,cardID):
             "card": model_to_dict(Card, fields=['card_id', 'question', 'answer'])
         }, status=200) # ✅ Dùng 200 OK
 
+@role_required('user')
 def study_flashcard_mode(request, set_id):
     # 1. Lấy thông tin Set
     set_instance = get_object_or_404(FlashcardSet, set_id=set_id)
@@ -139,8 +146,12 @@ def study_flashcard_mode(request, set_id):
     # 2. Lấy tất cả flashcards trong set
     flashcards_queryset = FlashcardItem.objects.filter(set=set_instance)
     
+    
     # 3. Tính learned_count đúng cách
     learned_count = flashcards_queryset.filter(learned=True).count()
+
+    # if not flashcards_queryset:
+    #     return render :
     
     # 4. Chuyển cards sang dạng list để dễ dàng truyền qua context
     flashcards_list = list(flashcards_queryset.values(
@@ -166,6 +177,7 @@ from django.db import IntegrityError
 
 @csrf_exempt
 @require_POST
+@role_required('user')
 def toggle_learned_status(request, card_id):
     try:
         # Log request info
@@ -265,6 +277,7 @@ def toggle_learned_status(request, card_id):
         }, status=500)
     
 
+@role_required('user')
 def soft_delete_set(request,setID):
     set = FlashcardSet.objects.get(set_id=setID)
     set.is_deleted = True
@@ -273,6 +286,7 @@ def soft_delete_set(request,setID):
 
 @require_POST
 @csrf_exempt
+@role_required('user')
 def soft_delete_card(request, cardID):
     print(f"Testing delete for card: {cardID}")
     print(f"User authenticated: {request.user.is_authenticated}")
@@ -300,67 +314,46 @@ def soft_delete_card(request, cardID):
 
 @require_POST
 @csrf_exempt
+@role_required('user')
 def edit_set(request, setID):
-    
     try:
-        # Parse JSON từ request body
-        if request.body:
-            try:
-                data = json.loads(request.body.decode('utf-8'))
-                print(f"Parsed JSON data: {data}")
-                title = data.get("title", "").strip()
-            except json.JSONDecodeError as e:
-                print(f"JSON decode error: {e}")
-                # Thử đọc như form data
-                title = request.POST.get("title", "").strip()
-        else:
-            title = request.POST.get("title", "").strip()
-        
-        print(f"Title: '{title}'")
-        
-        # Kiểm authentication (tạm bỏ qua để test)
-        # if not request.user.is_authenticated:
-        #     return JsonResponse({"success": False, "error": "Login required"}, status=401)
-        
-        
+        if not request.body:
+            return JsonResponse(
+                {"success": False, "error": "Empty request body"},
+                status=400
+            )
+
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {"success": False, "error": "Invalid JSON"},
+                status=400
+            )
+
+        title = data.get("title", "").strip()
+
         flashcard_set = FlashcardSet.objects.get(set_id=setID)
-        # flashcard_set = FlashcardSet.objects.get(set_id=setID, user=request.user)  # Khi có auth
-        
-        if title == '':
-            # Xóa mềm
+
+        if title == "":
             flashcard_set.is_deleted = True
             flashcard_set.save()
-            print(f"Set {setID} marked as deleted")
-            
             return JsonResponse({
-                "success": True, 
+                "success": True,
                 "deleted": True,
                 "message": "Set deleted"
             })
-        else:
-            # Cập nhật title
-            flashcard_set.title = title
-            flashcard_set.save()
-            print(f"Set {setID} title updated to: {title}")
-            
-            return JsonResponse({
-                "success": True, 
-                "title": flashcard_set.title,
-                "message": "Set updated"
-            })
-        
+
+        flashcard_set.title = title
+        flashcard_set.save()
+        return JsonResponse({
+            "success": True,
+            "title": flashcard_set.title,
+            "message": "Set updated"
+        })
+
     except FlashcardSet.DoesNotExist:
-        print(f"Set {setID} not found")
-        return JsonResponse({
-            "success": False, 
-            "error": "Set not found"
-        }, status=404)
-        
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return JsonResponse({
-            "success": False, 
-            "error": str(e)
-        }, status=500)
+        return JsonResponse(
+            {"success": False, "error": "Set not found"},
+            status=404
+        )
