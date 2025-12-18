@@ -4,6 +4,13 @@ import uuid
 def generate_id():
     return str(uuid.uuid4())[:10]
 
+def generate_group_id():
+        last_group = ToDoListGroup.objects.order_by('-group_id').first()
+        if not last_group:
+            return "GRP0001"
+        number = int(last_group.group_id[3:]) + 1
+        return f"GRP{number:04d}"
+
 # ===========================
 # TODO LIST
 # ===========================
@@ -21,7 +28,7 @@ class ToDoList(models.Model):
 
 
 class ToDoListGroup(models.Model):
-    group_id = models.CharField(primary_key=True, max_length=10)
+    group_id = models.CharField(default=generate_group_id,primary_key=True, max_length=10)
     todolist = models.ForeignKey("to_do_list.ToDoList", on_delete=models.CASCADE, db_column='todolist_id')
     title = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -29,10 +36,10 @@ class ToDoListGroup(models.Model):
 
     class Meta:
         db_table = 'ToDoListGroup'
-        managed = False
 
     def __str__(self):
         return self.title
+    
 
 
 class Task(models.Model):
@@ -48,7 +55,6 @@ class Task(models.Model):
 
     class Meta:
         db_table = 'Task'
-        managed = False
 
     def __str__(self):
         return self.title
