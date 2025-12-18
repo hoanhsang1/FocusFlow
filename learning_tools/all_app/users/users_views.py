@@ -49,6 +49,7 @@ def check_login(request):
                 return redirect('to_do_list:home')
         else:
             return render(request, 'users/authenticate_page.html', {
+                'form': login_form(),
                 'page': 'login',
                 'error': 'Mật khẩu không đúng.'
             })
