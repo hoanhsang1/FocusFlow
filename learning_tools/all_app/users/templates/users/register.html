@@ -1,0 +1,10 @@
+<h1 class="modal_authenticate-tital">Register</h1>
+{% if error %}
+    <p class="error_authenticate">{{ error }}</p>
+{%endif%}
+<form class="authenticate_form" action="{% url 'users:register_form-post' %}" method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn w-100" type="submit">Register</button>
+</form>
+<a href="{% url 'users:login_form' %}">Login now</a>

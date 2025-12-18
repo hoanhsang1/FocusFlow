@@ -1,0 +1,108 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ set_title }} - Flashcards</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static "flashcards/css/flashcards_learn.css" %}">
+</head>
+<body>
+    <div class="flashcards-container" 
+        id="flashcards-container"
+        data-home-url="{% url 'flashcards:home' %}"
+        data-learned-count="{{ learned_count }}"
+        data-set-title="{{ set_title }}"
+        data-total-cards="{{ total_cards }}"
+    >
+        <div class="header">
+            <div>
+                <h1 class="title">Flashcards</h1>
+                <div class="subtitle">{{ set_title }}</div>
+            </div>
+            <div class="progress-info">
+                <div class="progress-text">Progress</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="card-counter" id="cardCounter">1 / {{ total_cards }}</div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="flashcard" id="flashcard">
+                <div class="card-inner" id="cardInner">
+                    <div class="card-front">
+                        <div class="card-label">Question</div>
+                        <div class="card-content" id="questionContent">
+                            {{ flashcards.0.question }}
+                        </div>
+                        <div class="status-badge status-unknown" id="statusBadge">Unknown</div>
+                        <div class="card-instruction">
+                            <i class="fas fa-mouse-pointer"></i> Click to flip
+                        </div>
+                    </div>
+                    <div class="card-back">
+                        <div class="card-label">Answer</div>
+                        <div class="card-content" id="answerContent">
+                            {{ flashcards.0.answer }}
+                        </div>
+                        <div class="status-badge status-unknown" id="statusBadgeBack">Unknown</div>
+                        <div class="card-instruction">
+                            <i class="fas fa-mouse-pointer"></i> Click to flip back
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn" id="prevBtn">
+                    <i class="fas fa-arrow-left"></i> 
+                    <span class="btn-text">Previous</span>
+                </button>
+                <button class="btn btn-show" id="flipBtn">
+                    <i class="fas fa-sync-alt"></i> 
+                    <span class="btn-text">Flip Card</span>
+                </button>
+                <button class="btn" id="markLearnedBtn">
+                    <i class="fas fa-check"></i> 
+                    <span class="btn-text mark-text">Mark as Learned</span>
+                    <span class="btn-text learned-text" style="display: none;">Learned</span>
+                </button>
+                <button class="btn" id="nextBtn">
+                    <span class="btn-text">Next</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container (sẽ được tạo động bằng JS) -->
+    <div id="toastContainer"></div>
+
+    <script>
+        // Biến global từ Django
+        window.flashcardsData = [
+            {% for card in flashcards %}
+            {
+                card_id: "{{ card.card_id|escapejs }}",
+                question: `{{ card.question|escapejs }}`,
+                answer: `{{ card.answer|escapejs }}`,
+                learned: {% if card.learned %}true{% else %}false{% endif %}
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+        
+        // Config từ Django
+        window.flashcardsConfig = {
+            csrfToken: "{{ csrf_token }}",
+            apiBaseUrl: "/flashcards/api/flashcards/",
+            learnedCount: {{ learned_count }},
+            totalCards: {{ total_cards }},
+            setTitle: "{{ set_title|escapejs }}"
+        };
+    </script>
+    <script src="{% static "flashcards/js/study_logic.js" %}"></script>
+</body>
+</html>

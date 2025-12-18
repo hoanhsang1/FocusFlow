@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { padding: 20px; font-family: Arial, sans-serif; }
+        .debug-box { 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin: 20px 0; 
+            border: 1px solid #dee2e6;
+        }
+        canvas { 
+            max-width: 400px; 
+            max-height: 300px; 
+            border: 1px solid #ddd; 
+            margin: 10px; 
+        }
+    </style>
+</head>
+<body>
+    <h1>Debug Analytics Page</h1>
+    
+    <div class="debug-box">
+        <h3>Test 1: Basic Chart.js</h3>
+        <div style="height: 300px;">
+            <canvas id="testChart1"></canvas>
+        </div>
+        <p id="test1-result">Testing...</p>
+    </div>
+    
+    <div class="debug-box">
+        <h3>Test 2: Template Data</h3>
+        <div id="template-data"></div>
+    </div>
+    
+    <script>
+        // Test 1: Basic Chart.js
+        document.addEventListener('DOMContentLoaded', function() {
+            const test1Result = document.getElementById('test1-result');
+            
+            if (typeof Chart === 'undefined') {
+                test1Result.innerHTML = '❌ Chart.js NOT loaded';
+                test1Result.style.color = 'red';
+                return;
+            }
+            
+            test1Result.innerHTML = '✅ Chart.js loaded (v' + Chart.version + ')';
+            test1Result.style.color = 'green';
+            
+            // Create test chart
+            const ctx1 = document.getElementById('testChart1').getContext('2d');
+            new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Test A', 'Test B', 'Test C'],
+                    datasets: [{
+                        data: [30, 50, 20],
+                        backgroundColor: ['#36a2eb', '#ff6384', '#4bc0c0']
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+        });
+        
+        // Test 2: Template context
+        const templateDataDiv = document.getElementById('template-data');
+        templateDataDiv.innerHTML = `
+            <p>Chart Data from Django: ${window.statusChartData ? 'Available' : 'NOT available'}</p>
+            <pre>${JSON.stringify(window.statusChartData || {}, null, 2)}</pre>
+        `;
+    </script>
+</body>
+</html>

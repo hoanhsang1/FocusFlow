@@ -1,0 +1,99 @@
+{% extends 'admin_manage/base.html' %}
+
+{% block page_title %}Task Management{% endblock %}
+
+{% block content %}
+<div class="data-table">
+    <div class="table-header">
+        <h3>All Tasks ({{ total_tasks }})</h3>
+        <div class="search-box">
+            <form method="GET" style="display: flex; gap: 10px;">
+                <input type="text" name="search" placeholder="Search tasks..." value="{{ search_query }}">
+                <select name="status" onchange="this.form.submit()">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                </select>
+                <select name="deletion" onchange="this.form.submit()">
+                    <option value="active" {% if deletion_filter == 'active' %}selected{% endif %}>Active</option>
+                    <option value="deleted" {% if deletion_filter == 'deleted' %}selected{% endif %}>Deleted</option>
+                </select>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Task Title</th>
+                <th>Group</th>
+                <th>Owner</th>
+                <th>Status</th>
+                <th>Deadline</th>
+                <th>Created Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in tasks %}
+            <tr>
+                <td>
+                    <strong>{{ task.title }}</strong>
+                    {% if task.description %}
+                    <br><small>{{ task.description|truncatewords:10 }}</small>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if task.group %}
+                        {{ task.group.title }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    {% if task.group and task.group.todolist and task.group.todolist.user %}
+                        {{ task.group.todolist.user.username }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    {% if task.status == 'completed' %}
+                    <span class="status-badge status-completed">Completed</span>
+                    {% else %}
+                    <span class="status-badge status-pending">Pending</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if task.deadline %}
+                        {{ task.deadline|date:"M d, Y" }}
+                        {% if task.is_overdue %}
+                        <br><small style="color: #dc3545;">Overdue</small>
+                        {% endif %}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>{{ task.created_at|date:"M d, Y" }}</td>
+                <td>
+                    {% if task.is_deleted %}
+                    <span class="status-badge status-deleted">Deleted</span>
+                    {% else %}
+                    <span class="status-badge status-active">Active</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 30px; color: #6c757d;">
+                    No tasks found
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

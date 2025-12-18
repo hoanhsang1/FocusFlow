@@ -1,0 +1,83 @@
+{% extends 'admin_manage/base.html' %}
+
+{% block page_title %}Dashboard Overview{% endblock %}
+
+{% block content %}
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3><i class="fas fa-users"></i> Total Users</h3>
+        <div class="stat-number">{{ stats.total_users }}</div>
+        <small>{{ stats.new_users_week }} new this week</small>
+    </div>
+    
+    <div class="stat-card">
+        <h3><i class="fas fa-folder"></i> Total Groups</h3>
+        <div class="stat-number">{{ stats.total_groups }}</div>
+        <small>{{ stats.active_groups }} active groups</small>
+    </div>
+    
+    <div class="stat-card">
+        <h3><i class="fas fa-tasks"></i> Total Tasks</h3>
+        <div class="stat-number">{{ stats.total_tasks }}</div>
+        <small>{{ stats.pending_tasks }} pending</small>
+    </div>
+    
+    <div class="stat-card">
+        <h3><i class="fas fa-check-circle"></i> Completed Tasks</h3>
+        <div class="stat-number">{{ stats.completed_tasks }}</div>
+        <small>{{ stats.completed_tasks|floatformat:0 }}% completion rate</small>
+    </div>
+    
+    <div class="stat-card">
+        <h3><i class="fas fa-exclamation-triangle"></i> Overdue Tasks</h3>
+        <div class="stat-number">{{ stats.overdue_tasks }}</div>
+        <small>Need attention</small>
+    </div>
+    
+    <div class="stat-card">
+        <h3><i class="fas fa-trash"></i> Deleted Items</h3>
+        <div class="stat-number">{{ stats.deleted_groups }}</div>
+        <small>{{ stats.deleted_tasks }} deleted tasks</small>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
+    <!-- Recent Activity -->
+    <div class="activity-list">
+        <h3 style="margin-bottom: 20px; color: #2c3e50;">Recent Activity</h3>
+        {% for task in recent_tasks %}
+        <div class="activity-item">
+            <div class="activity-info">
+                <strong>{{ task.group.todolist.user.username }}</strong> 
+                created task "<strong>{{ task.title }}</strong>" in 
+                <strong>{{ task.group.title }}</strong>
+            </div>
+            <div class="activity-time">
+                {{ task.created_at|timesince }} ago
+            </div>
+        </div>
+        {% empty %}
+        <p style="text-align: center; color: #6c757d; padding: 20px;">No recent activity</p>
+        {% endfor %}
+    </div>
+
+    <!-- Top Users -->
+    <div class="activity-list">
+        <h3 style="margin-bottom: 20px; color: #2c3e50;">Top Active Users</h3>
+        {% for user in top_users %}
+        <div class="activity-item">
+            <div class="activity-info">
+                <strong>{{ user.username }}</strong>
+                <div style="font-size: 0.9em; color: #6c757d;">
+                    {{ user.task_count }} tasks
+                </div>
+            </div>
+            <span class="status-badge status-active">Active</span>
+        </div>
+        {% empty %}
+        <p style="text-align: center; color: #6c757d; padding: 20px;">No user data</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

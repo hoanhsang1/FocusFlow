@@ -1,0 +1,94 @@
+<!-- login.html -->
+<h1 class="modal_authenticate-tital">Login</h1>
+
+{% if error %}
+    <p class="error_authenticate">{{ error }}</p>
+{% endif %}
+
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'success' %}
+            <div class="success-message">{{ message }}</div>
+        {% elif message.tags == 'error' %}
+            <div class="error_authenticate">{{ message }}</div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<form class="authenticate_form" action="{% url 'users:login_form-post' %}" method="POST">
+    {% csrf_token %}
+    {% for field in form %}
+        <div class="form-group">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.errors %}
+                <ul class="errorlist">
+                    {% for error in field.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    {% endfor %}
+    <button class="btn w-100" type="submit" id="loginBtn">Login</button>
+</form>
+
+<div class="divider">
+    <span>hoặc</span>
+</div>
+
+<div class="social-login">
+    <a href="{% url 'users:google_login' %}" class="btn-google" id="googleBtn">
+        <i class="fab fa-google"></i>
+        <span>Đăng nhập với Google</span>
+    </a>
+</div>
+
+<div class="auth-links">
+    <p>Chưa có tài khoản? <a href="{% url 'users:register_form' %}">Đăng ký ngay</a></p>
+    <p><a href="#" class="forgot-password">Quên mật khẩu?</a></p>
+</div>
+
+<script>
+// Thêm loading state cho các nút
+document.addEventListener('DOMContentLoaded', function() {
+    const loginBtn = document.getElementById('loginBtn');
+    const googleBtn = document.getElementById('googleBtn');
+    
+    if (loginBtn) {
+        loginBtn.addEventListener('click', function() {
+            this.classList.add('btn-loading');
+            this.disabled = true;
+        });
+    }
+    
+    if (googleBtn) {
+        googleBtn.addEventListener('click', function() {
+            this.classList.add('btn-loading');
+            // Thay đổi text thành loading
+            const span = this.querySelector('span');
+            if (span) {
+                span.textContent = 'Đang kết nối...';
+            }
+        });
+    }
+    
+    // Thêm toggle password (nếu có field password)
+    const passwordField = document.querySelector('input[type="password"]');
+    if (passwordField) {
+        const toggleBtn = document.createElement('button');
+        toggleBtn.type = 'button';
+        toggleBtn.className = 'password-toggle';
+        toggleBtn.innerHTML = '<i class="far fa-eye"></i>';
+        
+        passwordField.parentNode.style.position = 'relative';
+        passwordField.parentNode.appendChild(toggleBtn);
+        
+        toggleBtn.addEventListener('click', function() {
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            this.innerHTML = type === 'password' ? '<i class="far fa-eye"></i>' : '<i class="far fa-eye-slash"></i>';
+        });
+    }
+});
+</script>

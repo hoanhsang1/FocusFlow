@@ -1,0 +1,104 @@
+
+<ul class="nav">
+    
+        <li style="margin-top: 10px;"><a href="">
+            <i class="fa-solid fa-house"></i>
+        </a></li>
+        <li class="{% if 'todolist' in request.path %}active{% endif %}"><a href="{% url 'to_do_list:home' %}">
+            <i class="fa-solid fa-list"></i>
+        </a></li>
+        <li class="{% if 'flashcards' in request.path %}active{% endif %}"><a href="{% url 'flashcards:home' %}">
+            <i class="fa-solid fa-notes-medical"></i>
+        </a></li>
+        <li><a href="">
+            <i class="fa-regular fa-calendar-days"></i>`
+        </a></li>
+        <li><a href="">
+            <i class="fa-regular fa-circle-check"></i>
+        </a></li>
+        <li><a href="">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+        </a></li>
+</ul>
+
+<style>
+.nav {
+    background: #4a90e2;
+    padding: 20px 0;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+    position: relative;
+    height: 100%;
+    overflow: visible;
+}
+
+.nav li {
+    list-style: none;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+
+.nav a {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    color: #fff;
+    text-decoration: none;
+}
+
+.nav li i {
+    font-size: 20px;
+}
+
+/* ACTIVE STATE */
+.nav li.active a {
+    background: white;
+    border-radius: 50px 0 0 50px;
+    width: calc(100% + 20px);
+    margin-left: -10px;
+    position: relative;
+    z-index: 2;
+}
+
+/* Tạo vòng bo bằng pseudo-element */
+.nav li.active a::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    background: transparent;
+    border-bottom-right-radius: 20px;
+    box-shadow: 5px 5px 0 5px white;
+    z-index: 1;
+}
+
+.nav li.active a::after {
+    content: '';
+    position: absolute;
+    bottom: -20px;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    background: transparent;
+    border-top-right-radius: 20px;
+    box-shadow: 5px -5px 0 5px white;
+    z-index: 1;
+}
+
+.nav li.active a i {
+    color: #4a90e2;
+    margin-left: 5px;
+}
+</style>

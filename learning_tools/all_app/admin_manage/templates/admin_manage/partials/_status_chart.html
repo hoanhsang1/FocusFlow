@@ -1,0 +1,55 @@
+<!-- _status_chart.html -->
+{% load static %}
+
+<div id="statusChartContainer" class="status-chart-container">
+    <!-- Header -->
+    <div class="status-chart-header">
+        <h3 class="status-chart-title">
+            <i class="fas fa-chart-pie"></i> Task Status Distribution
+        </h3>
+        
+        <div class="status-chart-actions">
+            <button id="chartTypeDoughnut" class="status-chart-btn status-chart-btn-primary">
+                <i class="fas fa-donut"></i> Doughnut
+            </button>
+            <button id="chartTypePie" class="status-chart-btn">
+                <i class="fas fa-chart-pie"></i> Pie
+            </button>
+            <button id="chartTypeBar" class="status-chart-btn">
+                <i class="fas fa-chart-bar"></i> Bar
+            </button>
+            <button id="refreshChartBtn" class="status-chart-btn">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <button id="exportChartBtn" class="status-chart-btn status-chart-btn-success">
+                <i class="fas fa-download"></i> Export
+            </button>
+        </div>
+    </div>
+    
+    <!-- Error Display -->
+    <div id="statusChartError" class="status-chart-error" style="display: none;">
+        <!-- Error message will be inserted here -->
+    </div>
+    
+    <!-- Chart Canvas -->
+    <div class="status-chart-canvas-wrapper">
+        <canvas id="statusChart"></canvas>
+        
+        <!-- Loading Indicator -->
+        <div id="statusChartLoading" class="status-chart-loading" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Loading chart data...</span>
+        </div>
+    </div>
+    
+    <!-- Legend -->
+    <div class="status-chart-legend" id="statusChartLegend">
+        <!-- Legend items will be inserted here -->
+    </div>
+    
+    <!-- Statistics -->
+    <div class="status-chart-stats" id="statusChartStats">
+        <!-- Stats will be inserted here -->
+    </div>
+</div>

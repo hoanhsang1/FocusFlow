@@ -1,0 +1,507 @@
+:root {
+    --primary-blue: #4A90E2;
+    --primary-dark: #333333;
+    --background-light: #f7f9fc;
+    --card-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+    --control-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    --progress-color: #4CAF50;
+}
+
+/* Reset và cơ bản */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--background-light);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+/* Container chính */
+.flashcards-container {
+    width: 100%;
+    max-width: 800px;
+    background-color: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    min-height: 700px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.header {
+    padding: 30px 40px;
+    background: linear-gradient(135deg, var(--primary-blue), #2c80e2);
+    color: white;
+    position: relative;
+}
+
+.header .title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.header .subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+/* Progress info */
+.progress-info {
+    position: absolute;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    text-align: right;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 15px 20px;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    min-width: 200px;
+}
+
+.progress-text {
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    opacity: 0.9;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: white;
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
+.card-counter {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Main content */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 40px;
+    align-items: center;
+}
+
+/* Flashcard */
+.flashcard {
+    width: 100%;
+    height: 450px;
+    perspective: 1500px;
+    margin-bottom: 40px;
+    cursor: pointer;
+}
+
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 20px;
+    box-shadow: var(--card-shadow);
+}
+
+.card-inner.flipped {
+    transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    padding: 40px;
+}
+
+.card-front {
+    background: white;
+    color: var(--primary-dark);
+}
+
+.card-back {
+    background: var(--primary-blue);
+    color: white;
+    transform: rotateY(180deg);
+}
+
+.card-label {
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.7;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.card-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 32px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.4;
+    padding: 20px;
+    word-break: break-word;
+    overflow-y: auto;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 20px;
+    align-self: center;
+}
+
+.status-unknown {
+    background-color: #FF9800;
+    color: white;
+}
+
+.status-learned {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.card-instruction {
+    margin-top: auto;
+    text-align: center;
+    font-size: 0.9rem;
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* Sửa phần controls và nút */
+/* Sửa phần controls và nút */
+.controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    background-color: #f0f0f0;
+    color: #333;
+    flex: 1;
+    max-width: 180px;
+    min-height: 48px;
+}
+
+/* Đảm bảo layout không bị lệch */
+#prevBtn, #flipBtn, #markLearnedBtn, #nextBtn {
+    flex: 1;
+}
+
+/* Nút Mark as Learned khi ở trạng thái learned */
+/* Nút Mark as Learned */
+#markLearnedBtn {
+    transition: all 0.3s ease;
+    min-width: 180px; /* Cố định chiều rộng tối thiểu */
+    max-width: 180px; /* Cố định chiều rộng tối đa */
+    overflow: hidden; /* Ẩn phần thừa */
+    white-space: nowrap; /* Không xuống dòng */
+}
+
+/* Khi ở trạng thái learned */
+#markLearnedBtn.learned {
+    background-color: #4CAF50 !important;
+    color: white !important;
+    min-width: 180px; /* Giữ nguyên kích thước */
+    max-width: 180px;
+}
+
+/* Text trong nút */
+#markLearnedBtn span {
+    display: inline-block;
+    transition: opacity 0.3s ease;
+    margin-left: 8px;
+}
+
+/* Khi learned - thay đổi text mượt mà */
+#markLearnedBtn.learned i::before {
+    content: "\f00c"; /* FontAwesome check */
+}
+
+#markLearnedBtn:not(.learned) i::before {
+    content: "\f00c"; /* FontAwesome check */
+}
+
+/* Hoặc giải pháp khác: Dùng data attribute */
+#markLearnedBtn[data-learned="true"] {
+    background-color: #4CAF50;
+    color: white;
+}
+
+#markLearnedBtn[data-learned="true"]::after {
+    content: "Learned";
+}
+
+#markLearnedBtn[data-learned="false"]::after {
+    content: "Mark as Learned";
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn-show {
+    background-color: var(--primary-blue);
+    color: white;
+}
+
+/* Toast Notifications */
+.toast {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    padding: 18px 25px;
+    border-radius: 12px;
+    color: white;
+    font-weight: 500;
+    z-index: 10000;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 320px;
+    max-width: 400px;
+    animation: toastSlideIn 0.4s ease-out forwards;
+    font-size: 0.95rem;
+}
+
+.toast-success {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    border-left: 5px solid #27ae60;
+}
+
+.toast::before {
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 1.3rem;
+}
+
+.toast-success::before {
+    content: '✓';
+}
+
+.toast-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    padding: 5px;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast-close:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes toastSlideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes toastSlideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .flashcards-container {
+        max-width: 95%;
+        min-height: 600px;
+    }
+    
+    .header {
+        padding: 25px;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .progress-info {
+        position: static;
+        transform: none;
+        margin-top: 20px;
+        width: 100%;
+        text-align: center;
+    }
+    
+    .flashcard {
+        height: 350px;
+    }
+    
+    .card-content {
+        font-size: 26px;
+        padding: 15px;
+    }
+    
+    .controls {
+        flex-wrap: wrap;
+    }
+    
+    .btn {
+        min-width: 120px;
+        padding: 12px 20px;
+    }
+    
+    .toast {
+        min-width: 250px;
+        max-width: 300px;
+        right: 15px;
+        top: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .card-content {
+        font-size: 22px;
+    }
+    
+    .btn {
+        min-width: 100px;
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+    
+    .card-label {
+        font-size: 0.9rem;
+    }
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 7px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-show {
+    background-color: var(--primary-blue);
+    color: white;
+}
+
+/* Thêm vào cuối file */
+
+/* Fix cho nút Finish */
+#nextBtn[data-action="finish"] {
+    background-color: #28a745 !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 600 !important;
+}
+
+#nextBtn[data-action="finish"]:hover {
+    background-color: #218838 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* Đảm bảo tất cả nút đều có thể click */
+.btn {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed !important;
+}
+
+/* Nút Next bình thường */
+#nextBtn[data-action="next"] {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+#nextBtn[data-action="next"]:hover {
+    background-color: #e0e0e0;
+}
+
+/* Debug border để xem nút */
+.debug-border {
+    border: 2px solid red !important;
+}

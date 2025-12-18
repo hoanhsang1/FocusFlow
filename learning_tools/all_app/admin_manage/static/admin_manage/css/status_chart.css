@@ -1,0 +1,249 @@
+/* status_chart.css */
+.status-chart-container {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border: 1px solid #e9ecef;
+}
+
+.status-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.status-chart-title {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-chart-title i {
+    color: #36a2eb;
+}
+
+.status-chart-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.status-chart-btn {
+    padding: 6px 12px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.status-chart-btn:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+    transform: translateY(-1px);
+}
+
+.status-chart-btn:active {
+    transform: translateY(0);
+}
+
+.status-chart-btn-primary {
+    background: #36a2eb;
+    color: white;
+    border-color: #2c91da;
+}
+
+.status-chart-btn-primary:hover {
+    background: #2c91da;
+    border-color: #247cbb;
+}
+
+.status-chart-btn-success {
+    background: #28a745;
+    color: white;
+    border-color: #218838;
+}
+
+.status-chart-btn-success:hover {
+    background: #218838;
+    border-color: #1c7430;
+}
+
+.status-chart-canvas-wrapper {
+    position: relative;
+    height: 280px;
+    margin-top: 10px;
+}
+
+.status-chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.status-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.status-legend-item:hover {
+    background-color: #f8f9fa;
+}
+
+.status-legend-item.hidden {
+    opacity: 0.4;
+}
+
+.status-legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    flex-shrink: 0;
+}
+
+.status-legend-text {
+    color: #495057;
+    font-weight: 500;
+}
+
+.status-legend-value {
+    font-weight: bold;
+    color: #2c3e50;
+    margin-left: 5px;
+    font-size: 12px;
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.status-chart-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.status-chart-total {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.status-chart-percentage {
+    color: #6c757d;
+}
+
+.status-chart-error {
+    text-align: center;
+    padding: 40px 20px;
+    color: #dc3545;
+    background: #f8d7da;
+    border-radius: 6px;
+    margin: 10px 0;
+}
+
+.status-chart-error i {
+    font-size: 24px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.status-chart-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: 5px;
+}
+
+.status-chart-loading i {
+    font-size: 24px;
+    color: #36a2eb;
+    margin-bottom: 10px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .status-chart-container {
+        padding: 15px;
+    }
+    
+    .status-chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .status-chart-actions {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+    
+    .status-chart-canvas-wrapper {
+        height: 250px;
+    }
+    
+    .status-chart-legend {
+        gap: 8px;
+    }
+    
+    .status-legend-item {
+        flex: 1;
+        min-width: calc(50% - 8px);
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 480px) {
+    .status-chart-canvas-wrapper {
+        height: 220px;
+    }
+    
+    .status-legend-item {
+        min-width: 100%;
+    }
+    
+    .status-chart-actions {
+        flex-direction: column;
+    }
+    
+    .status-chart-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

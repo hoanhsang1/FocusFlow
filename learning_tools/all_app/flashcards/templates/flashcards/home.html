@@ -1,0 +1,134 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static "css/rest.css"  %}">
+    <link rel="stylesheet" href="{% static "css/base.css" %}">
+    <link rel="stylesheet" href="{% static "fontawesome-free-6.7.2-web/css/all.css"  %}">
+    <link rel="stylesheet" href="{% static "bootstrap-5.3.8-dist/css/bootstrap.css"  %}">
+    <link rel="stylesheet" href="{% static "flashcards/css/flashcards_home.css"  %}">
+    <title>Document</title>
+</head>
+<body>
+    <div class="flashcards_container">
+        <div class='gird_col-0-5'>
+            {% include 'users/navigation.html'%}
+        </div>
+        <div class="gird_col-1-5 flashcards_nav">
+            <h1>Your set</h1>
+            <div class="flashcards_all-set" id="set-list" data-id="{{flashcard.flashcard_id}}">
+                {% for set in allSet %}
+                    <div class="flashcards_set" data-id="{{set.set_id}}">
+                        <div class="flashcards_set-name">
+                            
+                            <form onsubmit="return false;">
+                                <i class="fa-regular fa-folder"></i>
+                                <input id="set_name" type="text" 
+                                    name="title"
+                                    value="{{set.title}}" 
+                                    onblur="edit_set(this, '{{set.set_id}}')"
+                                    onkeypress="if(event.keyCode===13) this.blur()">
+                            </form>
+                        </div>
+                    </div>        
+                {% endfor %}
+            </div>  
+            <form class="flashcards_add-setFrom" onsubmit="addset(event)" method="post" name="add_set-form">
+                {% csrf_token %}
+                <div class="flashcards_add-set">
+                    <i class="fa-solid fa-plus"></i>
+                    <input type="text" name="add_set" id="set-name" placeholder="New set">
+                </div>
+            </form>
+        </div>
+        <div class="gird_col-10">
+            <div class="item_container">
+                
+            </div>
+            
+        </div>
+    </div>
+    <div class="form_addCard hide">
+        <form action="" id="add-card-form" method="post">
+            <h1>Add new card</h1>
+            {% csrf_token %}
+            <label for="card_question_id">Enter question</label>
+            <input id="card_question_id" class="question_card" type="text" name="question" value="" placeholder="Question...">
+            <label for="card_answer_id">Enter answer</label>
+            <input id="card_answer_id" class="answer_card" type="text" name="answer" value="" placeholder="Answer...">
+            <div class="modal_close">
+                <i class="fa-solid fa-xmark"></i>
+            </div>
+            <button type="submit" name="add_card" class="btn">Save</button>
+        </form>
+    </div>
+    <div class="form_editCard hide" data-id="">
+        <form action="" id="edit-card-form" onsubmit="editCard(event)" method="post">
+            <h1>Edit card</h1>
+            {% csrf_token %}
+            <label for="editCard_question_id">Enter question</label>
+            <input id="editCard_question_id" class="edit_question-card" type="text" name="question" value="" placeholder="Question...">
+            <label for="editCard_answer_id">Enter answer</label>
+            <input id="editCard_answer_id" class="edit_answer-card" type="text" name="answer" value="" placeholder="Answer...">
+            <div class="modal_close">
+                <i class="fa-solid fa-xmark"></i>
+            </div>
+            <button type="submit" name="edit_card" class="btn">Save</button>
+            <button type="button" id="deleteCardBtn" class="btn" style="background-color: #dc3545; flex: 1;">
+                <i class="fa-solid fa-trash"></i> Delete
+            </button>
+        </form>
+    </div>
+    <div id="studyModal" class="study_modal_overlay hide"> 
+    
+        <div class="study_modal_content">
+            
+            <div class="modal_close">
+                <i class="fa-solid fa-xmark"></i>
+            </div>
+            
+            <h2 class="modal_title">Study this set</h2>
+            <p class="modal_subtitle">How do you want to learn?</p>
+            
+            <div class="modal_options_grid">
+                
+                <div class="option_card" data-mode="flashcard">
+                    <div class="option_icon icon_flashcard"><i class="fa-solid fa-clone"></i></div>
+                    <div class="option_text">Flashcard</div>
+                </div>
+
+                <div class="option_card" data-mode="learn">
+                    <div class="option_icon icon_learn"><i class="fa-solid fa-arrows-rotate"></i></div>
+                    <div class="option_text">Learn</div>
+                </div>
+
+                <div class="option_card" data-mode="test">
+                    <div class="option_icon icon_test"><i class="fa-solid fa-file-lines"></i></div>
+                    <div class="option_text">Exam</div>
+                </div>
+                
+                <div class="option_card" data-mode="match">
+                    <div class="option_icon icon_match"><i class="fa-solid fa-puzzle-piece"></i></div>
+                    <div class="option_text">Card matching</div>
+                </div>
+                
+                <div class="option_card" data-mode="write">
+                    <div class="option_icon icon_write"><i class="fa-solid fa-pencil"></i></div>
+                    <div class="option_text">Write</div>
+                </div>
+                
+                <div class="option_card hidden"></div>
+
+            </div>
+            
+            <div class="modal_footer">
+                <p>UI-Schedules • 10 thuật ngữ • Tác giả: bạn</p>
+            </div>
+            
+        </div>
+    </div>
+</body>
+<script src="{% static "flashcards/js/flashcards.js" %}"></script>
+</html>
