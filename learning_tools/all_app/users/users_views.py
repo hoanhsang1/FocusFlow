@@ -8,6 +8,8 @@ from django.db import IntegrityError
 import requests
 from django.conf import settings
 from django.contrib import messages
+import hashlib
+from core.encryption import EncryptionService
 
 # Create your views here.
 def show_login(request):
@@ -27,11 +29,15 @@ def show_register(request):
     return render(request,'users/authenticate_page.html',context)
 
 def check_login(request):
+    """
+    ĐĂNG NHẬP VỚI MÃ HÓA
+    """
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
 
         try:
+            # 1. Tìm user bằng username (không mã hóa)
             user = User.objects.get(username=username, is_deleted=False)
         except User.DoesNotExist:
             return render(request, 'users/authenticate_page.html', {
@@ -39,10 +45,16 @@ def check_login(request):
                 'error': 'Tên đăng nhập không tồn tại hoặc đã bị xóa.'
             })
 
-        if check_password(password, user.password):
+        # 2. Kiểm tra password bằng method check_password() của model
+        if user.check_password(password):
             # login thủ công
             request.session['user_id'] = user.user_id
             request.session['role'] = user.role
+            request.session['username'] = user.username
+            
+            # Gán user vào session để property email_full hoạt động
+            request.session['_user_obj_id'] = user.user_id
+            
             if user.get_role() == "admin":
                 return redirect('admin_manage:admin_manage_dashboard')
             else:
@@ -57,64 +69,107 @@ def check_login(request):
     return redirect('users:login')
 
 def register_user(request):
+    """
+    ĐĂNG KÝ VỚI MÃ HÓA
+    """
     if request.method == 'POST':
         form = register_form(request.POST)
         if form.is_valid():
             username = form.cleaned_data['username']
-            email = form.cleaned_data['email']
+            email = form.cleaned_data['email'].lower()  # Chuyển lowercase
             fullname = form.cleaned_data['fullname']
             password = form.cleaned_data['password']
 
             try:
-                # Kiểm tra username tồn tại
+                # 1. Kiểm tra username tồn tại
                 if User.objects.filter(username=username).exists():
-                    return render(request, 'users/authenticate_page.html', {'page': 'register', 'form': form, 'error': 'Tên đăng nhập đã tồn tại'})
+                    return render(request, 'users/authenticate_page.html', {
+                        'page': 'register', 
+                        'form': form, 
+                        'error': 'Tên đăng nhập đã tồn tại'
+                    })
 
-                # Kiểm tra email tồn tại
-                if User.objects.filter(email=email).exists():
-                    return render(request, 'users/authenticate_page.html', {'page': 'register', 'form': form, 'error': 'Email đã tồn tại'})
+                # 2. Kiểm tra email tồn tại bằng HASH
+                email_hash = hashlib.sha256(email.encode()).hexdigest()
+                if User.objects.filter(email_hash=email_hash).exists():
+                    return render(request, 'users/authenticate_page.html', {
+                        'page': 'register', 
+                        'form': form, 
+                        'error': 'Email đã tồn tại'
+                    })
 
-                # Tạo user mới
+                # 3. Tạo user mới với UserManager (tự động mã hóa email)
                 user = User.objects.create(
                     username=username,
-                    email=email,
-                    password=make_password(password),
+                    email=email,  # Sẽ tự động mã hóa trong field
+                    password=password,
                     fullname=fullname,
                     role="user"
                 )
+                print(f"✅ User created: {user.user_id}")
 
-                # 2. Tạo các dữ liệu liên quan - KHÔNG cần truyền id
-                from all_app.to_do_list.to_do_list_models import ToDoList
-                todo = ToDoList.objects.create(user=user)
-                
-                from all_app.flashcards.flashcards_models import Flashcard  
-                flashcard = Flashcard.objects.create(user=user)
-                
-                from all_app.habit.habit_models import Habit
-                habit = Habit.objects.create(user=user)
-                
-                from all_app.pomodoro.pomodoro_models import Pomodoro
-                pomodoro = Pomodoro.objects.create(user=user, title="My Pomodoro")
+                # 4. Tạo các dữ liệu liên quan
+                try:
+                    from all_app.to_do_list.to_do_list_models import ToDoList
+                    todo = ToDoList.objects.create(user=user)
+                    print(f"✅ ToDoList created: {todo.todolist_id}")
+                    
+                    from all_app.flashcards.flashcards_models import Flashcard  
+                    flashcard = Flashcard.objects.create(user=user)
+                    print(f"✅ Flashcard created: {flashcard.flashcard_id}")
+                    
+                    from all_app.habit.habit_models import Habit
+                    habit = Habit.objects.create(user=user)
+                    print(f"✅ Habit created: {habit.habit_id}")
+                    
+                    from all_app.pomodoro.pomodoro_models import Pomodoro
+                    pomodoro = Pomodoro.objects.create(user=user, title="My Pomodoro")
+                    print(f"✅ Pomodoro created: {pomodoro.pomodoro_id}")
+                    
+                    from all_app.calendar_app.calendar_models import Calendar
+                    calendar = Calendar.objects.create(user=user, name="My Calendar")
+                    print(f"✅ Calendar created: {calendar.calendar_id}")
+                    
+                except Exception as model_error:
+                    print(f"❌ Failed to create related data: {model_error}")
+                    import traceback
+                    traceback.print_exc()
+                    # Xóa user nếu tạo dữ liệu thất bại
+                    user.delete()
+                    return render(request, 'users/authenticate_page.html', {
+                        'page': 'register', 
+                        'form': form, 
+                        'error': 'Không thể thiết lập tài khoản. Vui lòng thử lại.'
+                    })
 
-                from all_app.calendar_app.calendar_models import Calendar
-                calendar = Calendar.objects.create(user=user, name="My Calendar")
-
+                # 5. Đăng nhập user
                 request.session['user_id'] = user.user_id
                 request.session['role'] = user.role
+                request.session['username'] = user.username
+                request.session['_user_obj_id'] = user.user_id
+                
+                messages.success(request, f"Đăng ký thành công! Chào mừng {fullname}")
                 return redirect('to_do_list:home')
+                
             except IntegrityError as e:
-                # Xử lý nếu username/email bị trùng tại thời điểm lưu (race condition)
+                print(f"❌ IntegrityError: {e}")
                 if 'Duplicate entry' in str(e):
-                    # Giả định lỗi do trùng username/email
-                    # Thường nên kiểm tra chi tiết lỗi DB, nhưng đây là cách đơn giản
-                    return render(request, 'users/authenticate_page.html', {'page': 'register', 'form': form, 'error': 'Tên đăng nhập hoặc Email đã tồn tại. Vui lòng thử lại.'})
+                    return render(request, 'users/authenticate_page.html', {
+                        'page': 'register', 
+                        'form': form, 
+                        'error': 'Tên đăng nhập hoặc Email đã tồn tại. Vui lòng thử lại.'
+                    })
                 else:
-                    # Ném lỗi khác nếu không phải lỗi trùng lặp
                     raise
             
 
         else:
-            return render(request, 'users/authenticate_page.html', {'page': 'register', 'form': form, 'error': 'Email đã tồn tại'})
+            # Form không hợp lệ
+            return render(request, 'users/authenticate_page.html', {
+                'page': 'register', 
+                'form': form, 
+                'error': 'Vui lòng kiểm tra lại thông tin nhập'
+            })
 
 
 def google_login(request):
@@ -128,14 +183,17 @@ def google_login(request):
         'access_type': 'online',
         'prompt': 'select_account',
     }
-    print(f"[DEBUG] Redirect URI being sent to Google: {settings.GOOGLE_REDIRECT_URI}")
+    print(f"[DEBUG] Redirect URI: {settings.GOOGLE_REDIRECT_URI}")
+    
     # Tạo Google OAuth URL
     auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{'&'.join([f'{k}={v}' for k, v in params.items()])}"
     
     return redirect(auth_url)
 
 def google_callback(request):
-    """Xử lý callback từ Google"""
+    """
+    XỬ LÝ GOOGLE CALLBACK VỚI MÃ HÓA
+    """
     # Lấy authorization code từ Google
     code = request.GET.get('code')
     error = request.GET.get('error')
@@ -149,7 +207,7 @@ def google_callback(request):
         return redirect('users:login_form')
     
     try:
-        print(f"[GOOGLE DEBUG] Received code: {code[:20]}...")
+        print(f"[GOOGLE] Received code: {code[:20]}...")
         
         # 1. Đổi code lấy access token
         token_data = {
@@ -160,18 +218,15 @@ def google_callback(request):
             'grant_type': 'authorization_code',
         }
         
-        print(f"[GOOGLE DEBUG] Requesting token from Google...")
         token_response = requests.post('https://oauth2.googleapis.com/token', data=token_data, timeout=10)
-        print(f"[GOOGLE DEBUG] Token response status: {token_response.status_code}")
         
         if token_response.status_code != 200:
-            print(f"[GOOGLE DEBUG] Token error: {token_response.text}")
+            print(f"[GOOGLE] Token error: {token_response.text}")
             messages.error(request, "Không thể lấy token từ Google")
             return redirect('users:login_form')
         
         token_json = token_response.json()
         access_token = token_json.get('access_token')
-        print(f"[GOOGLE DEBUG] Got access token")
         
         # 2. Lấy thông tin user từ Google
         user_info_response = requests.get(
@@ -180,55 +235,61 @@ def google_callback(request):
             timeout=10
         )
         
-        print(f"[GOOGLE DEBUG] User info response status: {user_info_response.status_code}")
-        
         if user_info_response.status_code != 200:
-            print(f"[GOOGLE DEBUG] User info error: {user_info_response.text}")
+            print(f"[GOOGLE] User info error: {user_info_response.text}")
             messages.error(request, "Không thể lấy thông tin từ Google")
             return redirect('users:login_form')
         
         user_info = user_info_response.json()
-        print(f"[GOOGLE DEBUG] User info: {user_info}")
+        print(f"[GOOGLE] User info: {user_info}")
         
         # 3. Xử lý thông tin user
         google_id = user_info.get('sub')  # Google user ID
-        email = user_info.get('email')
+        email = user_info.get('email', '').lower()  # Luôn lowercase
         name = user_info.get('name', '')
         
         if not email:
             messages.error(request, "Google không cung cấp email")
             return redirect('users:login_form')
         
-        print(f"[GOOGLE DEBUG] Processing user with email: {email}, google_id: {google_id}")
+        print(f"[GOOGLE] Processing: {email}, google_id: {google_id}")
         
-        # 4. Kiểm tra xem social account đã tồn tại chưa
+        # 4. Tìm social account bằng provider_id_hash
+        # Tạo hash từ provider_id để tìm
+        provider_id_hash = hashlib.sha256(
+            f"google:{google_id}".encode()
+        ).hexdigest()
+        
         try:
-            social_account = SocialAccount.objects.get(
+            # Sử dụng SocialAccountManager để tìm
+            social_account = SocialAccount.objects.get_by_provider_id(
                 provider='google', 
                 provider_id=google_id
             )
             user = social_account.user
-            print(f"[GOOGLE DEBUG] Found existing social account for user: {user.username}")
+            print(f"[GOOGLE] Found existing social account for: {user.username}")
             
         except SocialAccount.DoesNotExist:
-            print(f"[GOOGLE DEBUG] No social account found, checking email...")
+            print(f"[GOOGLE] No social account found, checking email...")
             
-            # 5. Kiểm tra xem email đã có trong hệ thống chưa
+            # 5. Tìm user bằng email_hash
+            email_hash = hashlib.sha256(email.encode()).hexdigest()
             try:
-                user = User.objects.get(email=email)
-                print(f"[GOOGLE DEBUG] Found existing user by email: {user.username}")
+                user = User.objects.get(email_hash=email_hash)
+                print(f"[GOOGLE] Found existing user by email: {user.username}")
                 
                 # Tạo liên kết Google với tài khoản hiện có
+                # Sử dụng SocialAccount.objects.create (sẽ tự động mã hóa)
                 SocialAccount.objects.create(
                     user=user,
                     provider='google',
-                    provider_id=google_id,
-                    email=email
+                    provider_id=google_id,  # Tự động mã hóa
+                    email=email              # Tự động mã hóa
                 )
                 messages.info(request, "Đã liên kết tài khoản Google với tài khoản hiện có")
                 
             except User.DoesNotExist:
-                print(f"[GOOGLE DEBUG] No user found, creating new user...")
+                print(f"[GOOGLE] Creating new user...")
                 
                 # 6. Tạo user mới
                 # Tạo username từ email
@@ -241,102 +302,199 @@ def google_callback(request):
                     username = f"{username_base}{counter}"
                     counter += 1
                 
-                print(f"[GOOGLE DEBUG] Creating user with username: {username}")
+                print(f"[GOOGLE] Creating user: {username}")
                 
-                # Tạo user mới
+                # Tạo user với UserManager (tự động mã hóa email)
                 user = User.objects.create(
                     username=username,
-                    email=email,
-                    password=make_password(None),  # Không cần password
+                    email=email,  # Tự động mã hóa
+                    password=User.objects.make_random_password(),
                     fullname=name,
                     role="user"
                 )
-                print(f"[GOOGLE DEBUG] User created: {user.user_id}")
+                print(f"[GOOGLE] User created: {user.user_id}")
                 
                 try:
-                    print(f"[GOOGLE DEBUG] Creating ToDoList...")
+                    # Tạo dữ liệu liên quan
+                    print(f"[GOOGLE] Creating related data...")
                     from all_app.to_do_list.to_do_list_models import ToDoList
-                    todo = ToDoList.objects.create(user=user)
-                    print(f"[GOOGLE DEBUG] ToDoList created: {todo.todolist_id}")
+                    ToDoList.objects.create(user=user)
                     
-                    print(f"[GOOGLE DEBUG] Creating Flashcard...")
                     from all_app.flashcards.flashcards_models import Flashcard  
-                    flashcard = Flashcard.objects.create(user=user)
-                    print(f"[GOOGLE DEBUG] Flashcard created: {flashcard.flashcard_id}")
+                    Flashcard.objects.create(user=user)
                     
-                    print(f"[GOOGLE DEBUG] Creating Habit...")
                     from all_app.habit.habit_models import Habit
-                    habit = Habit.objects.create(user=user)
-                    print(f"[GOOGLE DEBUG] Habit created: {habit.habit_id}")
+                    Habit.objects.create(user=user)
                     
-                    print(f"[GOOGLE DEBUG] Creating Pomodoro...")
                     from all_app.pomodoro.pomodoro_models import Pomodoro
-                    pomodoro = Pomodoro.objects.create(user=user, title="My Pomodoro")
-                    print(f"[GOOGLE DEBUG] Pomodoro created: {pomodoro.pomodoro_id}")
+                    Pomodoro.objects.create(user=user, title="My Pomodoro")
                     
-                    print(f"[GOOGLE DEBUG] Creating Calendar...")
                     from all_app.calendar_app.calendar_models import Calendar
-                    calendar = Calendar.objects.create(user=user, name="My Calendar")
-                    print(f"[GOOGLE DEBUG] Calendar created: {calendar.calendar_id}")
+                    Calendar.objects.create(user=user, name="My Calendar")
+                    
+                    print(f"[GOOGLE] Related data created")
                     
                 except Exception as model_error:
-                    print(f"[GOOGLE DEBUG ERROR] Failed to create related data: {model_error}")
-                    import traceback
-                    traceback.print_exc()
-                    # Nếu tạo dữ liệu thất bại, xóa user
+                    print(f"[GOOGLE ERROR] Failed to create related data: {model_error}")
                     user.delete()
                     messages.error(request, "Không thể thiết lập tài khoản. Vui lòng thử lại.")
                     return redirect('users:login_form')
                 
-                # Tạo social account
+                # Tạo social account (tự động mã hóa)
                 SocialAccount.objects.create(
                     user=user,
                     provider='google',
                     provider_id=google_id,
                     email=email
                 )
-                print(f"[GOOGLE DEBUG] Social account created")
+                print(f"[GOOGLE] Social account created")
                 
                 messages.success(request, "Đã tạo tài khoản mới với Google")
 
-        # 7. Đăng nhập user (set session)
-        print(f"[GOOGLE DEBUG] Setting session for user: {user.user_id}")
+        # 7. Đăng nhập user
+        print(f"[GOOGLE] Setting session for user: {user.user_id}")
         request.session['user_id'] = str(user.user_id)
         request.session['role'] = user.role
+        request.session['username'] = user.username
+        request.session['_user_obj_id'] = user.user_id
         
-        # Kiểm tra lại xem ToDoList có tồn tại không
-        from all_app.to_do_list.to_do_list_models import ToDoList
-        if ToDoList.objects.filter(user=user).exists():
-            print(f"[GOOGLE DEBUG] ToDoList exists for user")
-        else:
-            print(f"[GOOGLE DEBUG] ERROR: ToDoList does NOT exist for user!")
-            # Tạo ngay lập tức
-            ToDoList.objects.create(user=user)
-            print(f"[GOOGLE DEBUG] Created ToDoList in session")
-        
-        messages.success(request, f"Đăng nhập thành công với {email}")
+        messages.success(request, f"Đăng nhập thành công với {user.email_display}")
         
         # 8. Redirect về trang chủ
         if user.role == "admin":
-            print(f"[GOOGLE DEBUG] Redirecting to admin dashboard")
             return redirect('admin_manage:admin_manage_dashboard')
         else:
-            print(f"[GOOGLE DEBUG] Redirecting to todo home")
             return redirect('to_do_list:home')
             
     except requests.Timeout:
-        print(f"[GOOGLE DEBUG] Request timeout")
+        print(f"[GOOGLE] Request timeout")
         messages.error(request, "Kết nối với Google quá thời gian chờ")
         return redirect('users:login_form')
     except requests.RequestException as e:
-        print(f"[GOOGLE DEBUG] Request error: {e}")
+        print(f"[GOOGLE] Request error: {e}")
         messages.error(request, f"Lỗi kết nối: {str(e)}")
         return redirect('users:login_form')
     except Exception as e:
-        print(f"[GOOGLE DEBUG] General error: {e}")
+        print(f"[GOOGLE] General error: {e}")
         import traceback
         traceback.print_exc()
         messages.error(request, f"Lỗi hệ thống: {str(e)}")
         return redirect('users:login_form')
-    
 
+
+def logout_user(request):
+    """
+    ĐĂNG XUẤT
+    """
+    # Xóa tất cả session
+    request.session.flush()
+    messages.success(request, "Đã đăng xuất thành công")
+    return redirect('users:login_form')
+
+
+def user_profile(request):
+    """
+    XEM THÔNG TIN USER
+    """
+    if 'user_id' not in request.session:
+        return redirect('users:login_form')
+    
+    try:
+        user_id = request.session['user_id']
+        user = User.objects.get(user_id=user_id, is_deleted=False)
+        
+        # Gán request user để property email_full kiểm tra permission
+        user._request_user = user
+        
+        context = {
+            'user': user,
+            'email_display': user.email_display,
+            'email_full': user.email_full,  # Sẽ hiển thị full email vì là chính user
+        }
+        
+        return render(request, 'users/profile.html', context)
+        
+    except User.DoesNotExist:
+        messages.error(request, "Người dùng không tồn tại")
+        return redirect('users:login_form')
+
+
+def update_profile(request):
+    """
+    CẬP NHẬT THÔNG TIN USER
+    """
+    if 'user_id' not in request.session:
+        return redirect('users:login_form')
+    
+    if request.method == 'POST':
+        try:
+            user_id = request.session['user_id']
+            user = User.objects.get(user_id=user_id, is_deleted=False)
+            
+            # Cập nhật thông tin
+            fullname = request.POST.get('fullname')
+            new_email = request.POST.get('email', '').lower()
+            
+            if fullname:
+                user.fullname = fullname
+            
+            # Nếu thay đổi email
+            if new_email and new_email != user.email:
+                # Kiểm tra email mới có tồn tại không
+                new_email_hash = hashlib.sha256(new_email.encode()).hexdigest()
+                if User.objects.filter(email_hash=new_email_hash).exclude(user_id=user_id).exists():
+                    messages.error(request, "Email mới đã được sử dụng")
+                else:
+                    user.email = new_email  # Tự động mã hóa
+            
+            user.save()
+            messages.success(request, "Cập nhật thông tin thành công")
+            
+        except Exception as e:
+            print(f"❌ Update error: {e}")
+            messages.error(request, f"Cập nhật thất bại: {str(e)}")
+    
+    return redirect('users:profile')
+
+
+def change_password(request):
+    """
+    THAY ĐỔI MẬT KHẨU
+    """
+    if 'user_id' not in request.session:
+        return redirect('users:login_form')
+    
+    if request.method == 'POST':
+        try:
+            user_id = request.session['user_id']
+            user = User.objects.get(user_id=user_id, is_deleted=False)
+            
+            current_password = request.POST.get('current_password')
+            new_password = request.POST.get('new_password')
+            confirm_password = request.POST.get('confirm_password')
+            
+            # Kiểm tra mật khẩu hiện tại
+            if not user.check_password(current_password):
+                messages.error(request, "Mật khẩu hiện tại không đúng")
+                return redirect('users:profile')
+            
+            # Kiểm tra mật khẩu mới
+            if new_password != confirm_password:
+                messages.error(request, "Mật khẩu mới không khớp")
+                return redirect('users:profile')
+            
+            if len(new_password) < 6:
+                messages.error(request, "Mật khẩu phải có ít nhất 6 ký tự")
+                return redirect('users:profile')
+            
+            # Cập nhật mật khẩu
+            user.set_password(new_password)
+            user.save()
+            
+            messages.success(request, "Thay đổi mật khẩu thành công")
+            
+        except Exception as e:
+            print(f"❌ Change password error: {e}")
+            messages.error(request, f"Thay đổi mật khẩu thất bại: {str(e)}")
+    
+    return redirect('users:profile')

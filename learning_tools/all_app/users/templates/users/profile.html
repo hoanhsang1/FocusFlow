@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Thông tin cá nhân</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Hiển thị thông báo -->
+                    {% if messages %}
+                    <div class="alert-container">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Thông tin user -->
+                    <div class="mb-4">
+                        <h5>Thông tin cơ bản</h5>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th style="width: 30%">Username:</th>
+                                <td>{{ user.username }}</td>
+                            </tr>
+                            <tr>
+                                <th>Họ và tên:</th>
+                                <td>{{ user.fullname }}</td>
+                            </tr>
+                            <tr>
+                                <th>Email:</th>
+                                <td>
+                                    {{ email_display }}
+                                    {% if email_full != email_display %}
+                                    <br>
+                                    <small class="text-muted">Full email: {{ email_full }}</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Vai trò:</th>
+                                <td>
+                                    {% if user.role == "admin" %}
+                                    <span class="badge bg-danger">Quản trị viên</span>
+                                    {% else %}
+                                    <span class="badge bg-primary">Người dùng</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Ngày tạo:</th>
+                                <td>{{ user.created_at|date:"d/m/Y H:i" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <!-- Form cập nhật thông tin -->
+                    <div class="mb-4">
+                        <h5>Cập nhật thông tin</h5>
+                        <form method="POST" action="{% url 'users:update_profile' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="fullname" class="form-label">Họ và tên</label>
+                                <input type="text" class="form-control" id="fullname" name="fullname" 
+                                       value="{{ user.fullname }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email mới (nếu muốn thay đổi)</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       placeholder="Nhập email mới...">
+                                <div class="form-text">Để trống nếu không muốn thay đổi email</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Cập nhật</button>
+                        </form>
+                    </div>
+                    
+                    <!-- Form đổi mật khẩu -->
+                    <div class="mb-4">
+                        <h5>Đổi mật khẩu</h5>
+                        <form method="POST" action="{% url 'users:change_password' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="current_password" class="form-label">Mật khẩu hiện tại</label>
+                                <input type="password" class="form-control" id="current_password" 
+                                       name="current_password" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new_password" class="form-label">Mật khẩu mới</label>
+                                <input type="password" class="form-control" id="new_password" 
+                                       name="new_password" required minlength="6">
+                            </div>
+                            <div class="mb-3">
+                                <label for="confirm_password" class="form-label">Xác nhận mật khẩu mới</label>
+                                <input type="password" class="form-control" id="confirm_password" 
+                                       name="confirm_password" required minlength="6">
+                            </div>
+                            <button type="submit" class="btn btn-warning">Đổi mật khẩu</button>
+                        </form>
+                    </div>
+                    
+                    <!-- Social accounts linked -->
+                    <div class="mb-4">
+                        <h5>Tài khoản liên kết</h5>
+                        {% if user.social_accounts.exists %}
+                        <ul class="list-group">
+                            {% for account in user.social_accounts.all %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fab fa-{{ account.provider }} me-2"></i>
+                                    {{ account.provider|title }}
+                                </div>
+                                <span class="badge bg-success">Đã liên kết</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <p class="text-muted">Chưa có tài khoản nào được liên kết</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Logout button -->
+                    <div class="text-center">
+                        <a href="{% url 'users:logout' %}" class="btn btn-outline-danger">
+                            <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
