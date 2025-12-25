@@ -36,6 +36,7 @@ class SocialAccount(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
+        db_table = 'SocialAccount'
         unique_together = ['provider', 'provider_id']
     
     def __str__(self):
