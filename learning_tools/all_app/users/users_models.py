@@ -16,7 +16,7 @@ class User(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_deleted = models.BooleanField(default=False)
-    role = models.CharField(max_length=10, blank=True, null=True)
+    role = models.CharField(max_length=10, blank=True, null=True,default='user')
 
     class Meta:
         db_table = 'User'
@@ -36,6 +36,7 @@ class SocialAccount(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
+        db_table = 'SocialAccount'
         unique_together = ['provider', 'provider_id']
     
     def __str__(self):

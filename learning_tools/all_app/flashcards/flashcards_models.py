@@ -28,7 +28,6 @@ class FlashcardSet(models.Model):
 
     class Meta:
         db_table = 'FlashcardSet'
-        managed = False
 
     def __str__(self):
         return self.title
@@ -46,7 +45,6 @@ class FlashcardItem(models.Model):
 
     class Meta:
         db_table = 'FlashcardItem'
-        managed = False
 
     def __str__(self):
         return self.card_id
@@ -62,7 +60,6 @@ class FlashcardProgress(models.Model):
 
     class Meta:
         db_table = 'FlashcardProgress'
-        managed = False
         unique_together = ('card', 'user')
 
     def __str__(self):
