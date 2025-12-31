@@ -1,0 +1,245 @@
+<!-- users/templates/users/profile.html -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - {{ user.username }}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        .avatar-large {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #007bff;
+        }
+        
+        /* Debug styles */
+        .debug-info {
+            font-size: 0.8rem;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: none; /* Ẩn khi không cần debug */
+        }
+    </style>
+</head>
+<body>
+    {% include "users/header.html" %}
+    
+    <!-- Debug Info (bật lên khi cần) -->
+    <div class="debug-info container mt-3">
+        <h6>Debug Info:</h6>
+        <p><strong>Avatar URL:</strong> <code id="debugAvatarUrl">{{ avatar_url|default:'Not set' }}</code></p>
+        <p><strong>User ID:</strong> {{ user.user_id }}</p>
+        <p><strong>Session Avatar:</strong> {{ request.session.avatar_url|default:'Not set' }}</p>
+        <button onclick="testAvatarLoad()" class="btn btn-sm btn-warning">Test Avatar Load</button>
+        <button onclick="location.reload(true)" class="btn btn-sm btn-info">Hard Reload</button>
+    </div>
+    
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-user-circle me-2"></i>
+                            User Profile
+                        </h4>
+                    </div>
+                    
+                    <div class="card-body text-center">
+                        <!-- Avatar Section - QUAN TRỌNG: dùng avatar_url từ context -->
+                        <div class="mb-4">
+                            <img id="profileAvatar" 
+                                 src="{{ avatar_url|default:'/static/images/default-avatar.png' }}" 
+                                 alt="{{ user.username }}'s Avatar"
+                                 class="avatar-large"
+                                 onerror="handleAvatarError(this)">
+                            
+                            <div id="avatarFallback" style="display:none;" class="avatar-large d-inline-flex align-items-center justify-content-center bg-secondary text-white">
+                                <i class="fas fa-user fa-3x"></i>
+                            </div>
+                            
+                            <h3 class="mt-3">{{ user.fullname|default:user.username }}</h3>
+                            <p class="text-muted">@{{ user.username }}</p>
+                        </div>
+                        
+                        <!-- User Info Table -->
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th width="30%">Username</th>
+                                    <td>{{ user.username }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Full Name</th>
+                                    <td>{{ user.fullname|default:"Not set" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Email</th>
+                                    <td>{{ user.email|default:"Not set" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Role</th>
+                                    <td>
+                                        {% if user.role == "admin" %}
+                                            <span class="badge bg-danger">Administrator</span>
+                                        {% else %}
+                                            <span class="badge bg-success">User</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Joined Date</th>
+                                    <td>{{ user.created_at|date:"F d, Y H:i" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'users:edit_profile' %}" class="btn btn-primary">
+                                <i class="fas fa-edit me-2"></i>Edit Profile
+                            </a>
+                            
+                            <a href="{% url 'users:logout' %}" class="btn btn-outline-danger">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Thêm vào profile.html trong thẻ <style> -->
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f8f9fa;
+    }
+    
+    .avatar-large {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #007bff;
+        display: block; /* Thêm dòng này */
+        margin: 0 auto; /* Thêm dòng này */
+    }
+    
+    /* Ẩn fallback mặc định */
+    #avatarFallback {
+        display: none !important;
+    }
+    
+    /* Debug styles */
+    .debug-info {
+        font-size: 0.8rem;
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        display: none;
+    }
+</style>
+    
+<script>
+    // Xử lý khi avatar không load được
+    function handleAvatarError(img) {
+        console.log('Avatar failed to load:', img.src);
+        img.style.display = 'none';
+        
+        const fallback = document.getElementById('avatarFallback');
+        if (fallback) {
+            fallback.style.display = 'flex';
+        }
+        
+        // Thử load lại với timestamp
+        setTimeout(() => {
+            const newSrc = img.src.split('?')[0] + '?t=' + new Date().getTime();
+            console.log('Retrying with:', newSrc);
+            img.src = newSrc;
+            img.style.display = 'block';
+            fallback.style.display = 'none';
+        }, 1000);
+    }
+    
+    // Test function
+    function testAvatarLoad() {
+        const img = document.getElementById('profileAvatar');
+        console.log('Current avatar src:', img.src);
+        
+        // Force reload với timestamp
+        const newSrc = img.src.split('?')[0] + '?t=' + new Date().getTime();
+        img.src = newSrc;
+        
+        img.onload = function() {
+            console.log('✅ Avatar loaded successfully');
+            alert('Avatar loaded! Check console.');
+        };
+        
+        img.onerror = function() {
+            console.log('❌ Avatar failed to load');
+            alert('Avatar failed to load. Check console.');
+        };
+    }
+    
+    // Tự động kiểm tra khi trang load
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Profile page loaded');
+        console.log('Avatar URL:', document.getElementById('profileAvatar').src);
+        
+        // Hiện debug info nếu có param
+        if (window.location.search.includes('debug=true')) {
+            document.querySelector('.debug-info').style.display = 'block';
+        }
+        
+        // Kiểm tra avatar sau 2 giây
+        setTimeout(function() {
+            const img = document.getElementById('profileAvatar');
+            if (img.naturalWidth === 0 || img.naturalHeight === 0) {
+                console.log('⚠️ Avatar might not be loading correctly');
+                console.log('Natural dimensions:', img.naturalWidth, 'x', img.naturalHeight);
+                
+                // Thử load lại
+                const currentSrc = img.src;
+                if (!currentSrc.includes('?')) {
+                    img.src = currentSrc + '?t=' + new Date().getTime();
+                }
+            } else {
+                console.log('✅ Avatar loaded correctly:', img.naturalWidth, 'x', img.naturalHeight);
+            }
+        }, 2000);
+    });
+    
+    // Lắng nghe sự kiện cập nhật avatar
+    document.addEventListener('avatarUpdated', function(e) {
+        const img = document.getElementById('profileAvatar');
+        if (img) {
+            const timestamp = new Date().getTime();
+            img.src = e.detail.avatarUrl + '?t=' + timestamp;
+            console.log('Profile avatar updated via event');
+        }
+    });
+    </script>
+</body>
+</html>

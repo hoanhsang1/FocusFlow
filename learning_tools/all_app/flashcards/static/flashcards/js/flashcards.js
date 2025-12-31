@@ -458,6 +458,8 @@ function initializeApp() {
     if (editCardForm) editCardForm.addEventListener('submit', editCard);
     
     // D. Xử lý chế độ học trong modal
+    // D. Xử lý chế độ học trong modal
+    // D. Xử lý chế độ học trong modal
     document.querySelectorAll('.option_card').forEach(card => {
         card.addEventListener('click', function() {
             const mode = this.dataset.mode;
@@ -484,11 +486,22 @@ function initializeApp() {
                 }, 300);
             }
             
-            // Chuyển hướng
-            if (mode === 'flashcard') {
-                window.location.href = `/flashcards/home/study/${currentSetId}/flashcard`;
-            } else {
-                alert(`Chế độ "${mode}" đang được phát triển.`);
+            // Chuyển hướng theo chế độ
+            switch(mode) {
+                case 'flashcard':
+                    window.location.href = `/flashcards/home/study/${currentSetId}/flashcard`;
+                    break;
+                case 'test':
+                    // THÊM DÒNG NÀY: Chuyển đến trang Exam
+                    window.location.href = `/flashcards/set/${currentSetId}/essay/`;
+                    break;
+                case 'learn':
+                case 'match':
+                case 'write':
+                    alert(`Chế độ "${mode}" đang được phát triển.`);
+                    break;
+                default:
+                    alert('Chế độ không xác định.');
             }
         });
     });

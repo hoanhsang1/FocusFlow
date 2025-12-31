@@ -1,0 +1,294 @@
+<!-- flashcard/templates/flashcards/essay_results.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Kết quả bài làm - {{ flashcard_set.title }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: #28a745;
+            color: white;
+            padding: 25px;
+            border-radius: 10px 10px 0 0;
+            margin-bottom: 0;
+        }
+        
+        .header h1 {
+            margin-bottom: 5px;
+            font-size: 28px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            padding: 20px;
+        }
+        
+        .stat-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #28a745;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .progress-container {
+            padding: 0 20px 20px;
+        }
+        
+        .progress-bar {
+            height: 25px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #28a745;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            line-height: 25px;
+            transition: width 0.5s ease;
+        }
+        
+        .actions {
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid #eee;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            margin: 5px 10px;
+            background: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #218838;
+        }
+        
+        .btn-info {
+            background: #17a2b8;
+        }
+        
+        .btn-info:hover {
+            background: #138496;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .question-list {
+            padding: 20px;
+        }
+        
+        .question-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #17a2b8;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .question-text {
+            flex: 1;
+        }
+        
+        .badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .answer-text {
+            color: #6c757d;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn {
+                display: block;
+                width: 100%;
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1><i class="fas fa-chart-bar"></i> Kết quả bài làm: {{ flashcard_set.title }}</h1>
+                <p>Thời gian: {{ request.session.essay_results.submitted_at|default:"Vừa xong" }}</p>
+            </div>
+            
+            <!-- Thay đổi phần thống kê trong template -->
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value text-primary">{{ correct_count }}</div>
+                    <div class="stat-label">Câu đúng lần này</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value text-warning">{{ total_questions|add:"-correct_count" }}</div>
+                    <div class="stat-label">Câu sai lần này</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value text-info">{{ known_count }}</div>
+                    <div class="stat-label">Tổng đã học</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value text-success">{{ score_percentage|floatformat:1 }}%</div>
+                    <div class="stat-label">Điểm lần này</div>
+                </div>
+            </div>
+            
+            <!-- Thanh tiến trình -->
+            {% comment %} <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ percentage }}%;">
+                        {{ percentage|floatformat:1 }}%
+                    </div>
+                </div>
+            </div> {% endcomment %}
+            
+            <!-- Nút hành động -->
+            <div class="actions">
+                <a href="{% url 'flashcards:essay_mode' set_id=flashcard_set.set_id %}" class="btn">
+                    <i class="fas fa-redo"></i> Làm lại bài
+                </a>
+                <a href="{% url 'flashcards:review_essay' set_id=flashcard_set.set_id %}" class="btn btn-info">
+                    <i class="fas fa-eye"></i> Xem đáp án
+                </a>
+                <a href="{% url 'flashcards:home' %}" class="btn btn-secondary">
+                    <i class="fas fa-home"></i> Về trang chủ
+                </a>
+            </div>
+            
+            <!-- Danh sách chi tiết -->
+            <div class="question-list">
+                <h3 style="margin-bottom: 15px;">Chi tiết từng câu:</h3>
+                {% for item in progress_list %}
+                <div class="question-item">
+                    <div class="question-text">
+                        <strong>Câu {{ forloop.counter }}: {{ item.flashcard.question }}</strong>
+                        <div class="answer-text">
+                            Đáp án: {{ item.flashcard.answer }}
+                        </div>
+                    </div>
+                    <span class="badge {% if item.status == 'known' %}badge-success{% else %}badge-danger{% endif %}">
+                        {% if item.status == 'known' %}
+                        <i class="fas fa-check"></i> Đã biết
+                        {% else %}
+                        <i class="fas fa-times"></i> Cần ôn
+                        {% endif %}
+                    </span>
+                </div>
+                {% empty %}
+                <div style="text-align: center; padding: 30px; color: #6c757d;">
+                    <p>Chưa có dữ liệu progress.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Font Awesome cho icon -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    
+    <script>
+        // Thêm hiệu ứng cho thanh progress
+        document.addEventListener('DOMContentLoaded', function() {
+            const progressFill = document.querySelector('.progress-fill');
+            const targetWidth = progressFill.style.width;
+            progressFill.style.width = '0%';
+            
+            setTimeout(() => {
+                progressFill.style.width = targetWidth;
+            }, 100);
+        });
+    </script>
+</body>
+</html>

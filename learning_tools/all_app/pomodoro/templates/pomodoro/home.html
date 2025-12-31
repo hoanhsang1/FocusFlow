@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer - FocusFlow</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .pomodoro-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+            margin-top: 50px;
+        }
+        
+        .timer-display {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #333;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .btn-pomodoro {
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-start { background: #28a745; color: white; }
+        .btn-pause { background: #ffc107; color: black; }
+        .btn-stop { background: #dc3545; color: white; }
+        .btn-complete { background: #17a2b8; color: white; }
+        
+        .btn-pomodoro:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .session-badge {
+            font-size: 16px;
+            padding: 10px 20px;
+            border-radius: 50px;
+        }
+        
+        .pomodoro-card {
+            border: none;
+            border-radius: 15px;
+            transition: transform 0.3s;
+            margin-bottom: 15px;
+        }
+        
+        .pomodoro-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stats-box {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .nav-pills .nav-link {
+            border-radius: 10px;
+            margin: 5px;
+        }
+        
+        .nav-pills .nav-link.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: rgba(0,0,0,0.2);">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-clock me-2"></i>FocusFlow Pomodoro
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{% url 'pomodoro:home' %}">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <a class="nav-link" href="{% url 'pomodoro:history' %}">
+                    <i class="fas fa-history"></i> History
+                </a>
+                {% if request.session.user_id %}
+                <a class="nav-link" href="{% url 'users:profile' %}">
+                    <i class="fas fa-user"></i> Profile
+                </a>
+                <a class="nav-link" href="{% url 'users:logout' %}">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+                {% else %}
+                <a class="nav-link" href="{% url 'users:login_form' %}">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <!-- Main Timer Section -->
+                <div class="pomodoro-container">
+                    <!-- Messages -->
+                    {% if messages %}
+                    <div class="mb-4">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Timer Header -->
+                    <div class="text-center mb-4">
+                        <h1 class="display-4 fw-bold text-dark mb-3">
+                            <i class="fas fa-clock me-2"></i>Pomodoro Timer
+                        </h1>
+                        <p class="text-muted">Focus on your tasks with the Pomodoro Technique</p>
+                    </div>
+                    
+                    {% if active_pomodoro %}
+                    <!-- Active Pomodoro Timer -->
+                    <div class="text-center py-4">
+                        <h2 class="mb-3">{{ active_pomodoro.title }}</h2>
+                        
+                        <!-- Timer Display -->
+                        <div class="display-1 fw-bold my-4 timer-display" id="timerDisplay">
+                            25:00
+                        </div>
+                        
+                        <!-- Session Info -->
+                        <div class="mb-4">
+                            <span class="session-badge {% if active_pomodoro.current_session == 'work' %}bg-success{% else %}bg-info{% endif %} text-white">
+                                {{ active_pomodoro.current_session|title }} Session
+                            </span>
+                            <span class="session-badge bg-secondary text-white ms-2">
+                                {{ active_pomodoro.sessions_completed }} completed
+                            </span>
+                        </div>
+                        
+                        <!-- Control Buttons -->
+                        <div class="btn-group btn-group-lg mb-4">
+                            {% if active_pomodoro.status == 'running' %}
+                            <button class="btn btn-pomodoro btn-pause me-2" onclick="pausePomodoro('{{ active_pomodoro.pomodoro_id }}')">
+                                <i class="fas fa-pause me-2"></i>Pause
+                            </button>
+                            <button class="btn btn-pomodoro btn-stop" onclick="stopPomodoro('{{ active_pomodoro.pomodoro_id }}')">
+                                <i class="fas fa-stop me-2"></i>Stop
+                            </button>
+                            {% else %}
+                            <button class="btn btn-pomodoro btn-start me-2" onclick="startPomodoro('{{ active_pomodoro.pomodoro_id }}')">
+                                <i class="fas fa-play me-2"></i>Start
+                            </button>
+                            {% endif %}
+                            <button class="btn btn-pomodoro btn-complete" onclick="completeSession('{{ active_pomodoro.pomodoro_id }}')">
+                                <i class="fas fa-check me-2"></i>Complete
+                            </button>
+                        </div>
+                        
+                        <!-- Progress -->
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-success" style="width: {{ active_pomodoro.sessions_completed|default:0|add:"0"|divisibleby:4|yesno:"100,25" }}%">
+                            </div>
+                        </div>
+                        <small class="text-muted">{{ active_pomodoro.sessions_completed }} of 4 sessions completed</small>
+                    </div>
+                    {% else %}
+                    <!-- No Active Pomodoro -->
+                    <div class="text-center py-5">
+                        <h3 class="text-muted mb-4">No Active Pomodoro</h3>
+                        <p class="text-muted mb-4">Create a new Pomodoro to start focusing</p>
+                        <button class="btn btn-pomodoro btn-start btn-lg" onclick="createNewPomodoro()">
+                            <i class="fas fa-plus me-2"></i>Create New Pomodoro
+                        </button>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Quick Stats -->
+                    <div class="row mt-5">
+                        <div class="col-md-4">
+                            <div class="stats-box text-center">
+                                <i class="fas fa-play-circle fa-2x text-primary mb-3"></i>
+                                <h3>{{ today_stats.sessions|default:"0" }}</h3>
+                                <p class="text-muted">Today's Sessions</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stats-box text-center">
+                                <i class="fas fa-clock fa-2x text-success mb-3"></i>
+                                <h3>{{ today_stats.total_minutes|default:"0" }}</h3>
+                                <p class="text-muted">Minutes Focused</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stats-box text-center">
+                                <i class="fas fa-chart-line fa-2x text-warning mb-3"></i>
+                                <h3>{{ today_stats.avg_duration|default:"0"|floatformat:0 }}</h3>
+                                <p class="text-muted">Avg Minutes/Session</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pomodoro List -->
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="text-white">My Pomodoros</h3>
+                        <button class="btn btn-light" onclick="createNewPomodoro()">
+                            <i class="fas fa-plus me-1"></i> New
+                        </button>
+                    </div>
+                    
+                    <div class="row">
+                        {% for pomodoro in pomodoros|slice:":6" %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="pomodoro-card bg-white p-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="mb-1">{{ pomodoro.title|truncatechars:20 }}</h5>
+                                        <small class="text-muted">
+                                            Work: {{ pomodoro.work_duration }}min • Break: {{ pomodoro.break_duration }}min
+                                        </small>
+                                    </div>
+                                    <span class="badge {% if pomodoro.status == 'running' %}bg-success{% elif pomodoro.status == 'paused' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                        {{ pomodoro.get_status_display }}
+                                    </span>
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <div class="btn-group w-100">
+                                        <a href="{% url 'pomodoro:detail' pomodoro.pomodoro_id %}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        {% if pomodoro.status != 'running' %}
+                                        <button class="btn btn-outline-success btn-sm" 
+                                                onclick="startPomodoro('{{ pomodoro.pomodoro_id }}')">
+                                            <i class="fas fa-play"></i> Start
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <div class="p-4 text-center bg-white rounded">
+                                <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                                <h4 class="text-muted">No Pomodoros Yet</h4>
+                                <p class="text-muted">Create your first Pomodoro to get started!</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Recent History -->
+                <div class="mt-4 bg-white rounded p-4">
+                    <h4 class="mb-3">Recent Sessions</h4>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Topic</th>
+                                    <th>Duration</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for history in recent_history %}
+                                <tr>
+                                    <td>{{ history.start_time|date:"H:i" }}</td>
+                                    <td>{{ history.study_topic|truncatechars:30 }}</td>
+                                    <td>{{ history.get_duration_display }}</td>
+                                    <td>
+                                        <span class="badge {% if history.status == 'completed' %}bg-success{% else %}bg-warning{% endif %}">
+                                            {{ history.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-3">
+                                        No sessions recorded yet
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Timer Logic -->
+    <script>
+    let timerInterval;
+    let totalSeconds = 0;
+    let isRunning = false;
+
+    // Initialize timer if there's an active pomodoro
+    {% if active_pomodoro and active_pomodoro.status == 'running' %}
+    startTimer({{ active_pomodoro.get_current_duration }});
+    {% endif %}
+
+    function startTimer(minutes) {
+        if (isRunning) return;
+        
+        totalSeconds = minutes * 60;
+        isRunning = true;
+        updateTimerDisplay();
+        
+        timerInterval = setInterval(() => {
+            if (totalSeconds <= 0) {
+                clearInterval(timerInterval);
+                isRunning = false;
+                playSound();
+                showNotification("Time's up!");
+                return;
+            }
+            totalSeconds--;
+            updateTimerDisplay();
+        }, 1000);
+    }
+
+    function updateTimerDisplay() {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        const display = document.getElementById('timerDisplay');
+        if (display) {
+            display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+    }
+
+    function playSound() {
+        // Play notification sound
+        const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
+        audio.play().catch(e => console.log("Audio play failed:", e));
+    }
+
+    function showNotification(message) {
+        if ("Notification" in window && Notification.permission === "granted") {
+            new Notification("Pomodoro Timer", {
+                body: message,
+                icon: "https://cdn-icons-png.flaticon.com/512/3208/3208720.png"
+            });
+        }
+    }
+
+    // API Functions
+    function startPomodoro(pomodoroId) {
+        fetch(`/pomodoro/api/start/`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({pomodoro_id: pomodoroId})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Network error. Please try again.');
+        });
+    }
+
+    function pausePomodoro(pomodoroId) {
+        fetch(`/pomodoro/api/pause/`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({pomodoro_id: pomodoroId})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+
+    function stopPomodoro(pomodoroId) {
+        if (confirm('Stop this Pomodoro session?')) {
+            fetch(`/pomodoro/api/stop/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({pomodoro_id: pomodoroId})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        }
+    }
+
+    function completeSession(pomodoroId) {
+        fetch(`/pomodoro/api/complete/`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({pomodoro_id: pomodoroId})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+
+    function createNewPomodoro() {
+        const title = prompt('Enter Pomodoro title:', 'My Focus Session');
+        if (title) {
+            fetch(`/pomodoro/api/create/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    title: title,
+                    work_duration: 25,
+                    break_duration: 5
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Pomodoro created!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        }
+    }
+
+    // Request notification permission
+    if ("Notification" in window) {
+        if (Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+    }
+    </script>
+</body>
+</html>

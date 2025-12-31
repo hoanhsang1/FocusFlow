@@ -1,0 +1,258 @@
+<!-- flashcard/templates/flashcards/review_essay.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Xem đáp án - {{ flashcard_set.title }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: #17a2b8;
+            color: white;
+            padding: 25px;
+            border-radius: 10px 10px 0 0;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            margin-bottom: 10px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .flashcard-item {
+            padding: 25px;
+            border-bottom: 1px solid #eee;
+            transition: background 0.3s;
+        }
+        
+        .flashcard-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .flashcard-item:last-child {
+            border-bottom: none;
+        }
+        
+        .question-number {
+            display: inline-block;
+            background: #17a2b8;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 36px;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        
+        .question-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .answer-box {
+            background: #e8f4f8;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .answer-label {
+            font-weight: bold;
+            color: #17a2b8;
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .learned-status {
+            float: right;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .learned-true {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .learned-false {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .actions {
+            padding: 20px;
+            text-align: center;
+            background: #f8f9fa;
+            border-radius: 0 0 10px 10px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            margin: 0 10px;
+            background: #17a2b8;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #138496;
+        }
+        
+        .btn-primary {
+            background: #28a745;
+        }
+        
+        .btn-primary:hover {
+            background: #218838;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .instructions {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
+        
+        @media (max-width: 768px) {
+            .btn {
+                display: block;
+                width: 100%;
+                margin: 10px 0;
+            }
+            
+            .learned-status {
+                float: none;
+                display: inline-block;
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-eye"></i> Xem đáp án: {{ flashcard_set.title }}</h1>
+            <p>Tổng số câu: {{ flashcards.count }} | Hãy xem lại các đáp án đúng</p>
+        </div>
+        
+        <div class="instructions">
+            <p><strong>📝 Hướng dẫn:</strong> Đây là tất cả các câu hỏi và đáp án đúng trong set. Hãy ôn tập lại trước khi làm bài!</p>
+        </div>
+        
+        <div class="card">
+            {% for flashcard in flashcards %}
+            <div class="flashcard-item">
+                <div>
+                    <span class="question-number">{{ forloop.counter }}</span>
+                    <h3 class="question-title">{{ flashcard.question }}</h3>
+                    
+                    <span class="learned-status {% if flashcard.learned %}learned-true{% else %}learned-false{% endif %}">
+                        {% if flashcard.learned %}
+                        <i class="fas fa-check"></i> Đã học
+                        {% else %}
+                        <i class="fas fa-times"></i> Chưa học
+                        {% endif %}
+                    </span>
+                    
+                    <div class="answer-box">
+                        <span class="answer-label">📌 Đáp án đúng:</span>
+                        <p style="font-size: 18px; margin-top: 5px;">{{ flashcard.answer }}</p>
+                    </div>
+                    
+                    {% if flashcard.learned %}
+                    <div style="margin-top: 15px; color: #28a745; font-size: 14px;">
+                        <i class="fas fa-calendar-check"></i> Đã học vào: {{ flashcard.updated_at|date:"d/m/Y H:i" }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align: center; padding: 50px; color: #6c757d;">
+                <p><i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 20px;"></i></p>
+                <h3>Không có câu hỏi nào</h3>
+                <p>Set này chưa có flashcard nào.</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="actions">
+            <a href="{% url 'flashcards:essay_mode' set_id=flashcard_set.set_id %}" class="btn btn-primary">
+                <i class="fas fa-redo"></i> Làm bài kiểm tra
+            </a>
+            <a href="{% url 'flashcards:essay_results' set_id=flashcard_set.set_id %}" class="btn">
+                <i class="fas fa-chart-bar"></i> Xem kết quả
+            </a>
+            <a href="{% url 'flashcards:home' %}" class="btn btn-secondary">
+                <i class="fas fa-home"></i> Về trang chủ
+            </a>
+        </div>
+    </div>
+    
+    <!-- Font Awesome -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    
+    <script>
+        // Thêm hiệu ứng cho các câu hỏi
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashcards = document.querySelectorAll('.flashcard-item');
+            flashcards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

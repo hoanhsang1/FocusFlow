@@ -11,4 +11,14 @@ urlpatterns = [
     # Google OAuth URLs
     path('google/login/', views.google_login, name='google_login'),
     path('google/callback/', views.google_callback, name='google_callback'),
+    # Profile URLs
+    path('profile/', views.profile_view, name='profile'),
+    path('profile/edit/', views.edit_profile, name='edit_profile'),
+    
+    # API URLs (AJAX)
+    path('api/upload-avatar/', views.upload_avatar, name='upload_avatar'),
+    path('api/user-info/', views.get_user_info, name='get_user_info'),
+    
+    # Logout
+    path('logout/', views.logout_view, name='logout'),
 ]

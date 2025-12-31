@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,3 +29,16 @@ urlpatterns = [
     path('users/', include('all_app.users.users_urls')),
     path('admin_manage/', include('all_app.admin_manage.admin_manage_urls')),
 ]
+
+# QUAN TRỌNG: Thêm cả static và media
+if settings.DEBUG:
+    # Static files
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    # Media files
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# HOẶC nếu bạn dùng STATICFILES_DIRS:
+if settings.DEBUG:
+    from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+    urlpatterns += staticfiles_urlpatterns()
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

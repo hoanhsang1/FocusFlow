@@ -1,4 +1,5 @@
 from datetime import timezone
+from django.contrib import messages
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 from all_app.users.check_login_role import *
@@ -8,6 +9,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.forms.models import model_to_dict
 from django.views.decorators.http import require_POST
 import json
+from django.utils import timezone
+from all_app.users.users_models import User
+
 # Create your views here.
 
 
@@ -357,3 +361,198 @@ def edit_set(request, setID):
             {"success": False, "error": "Set not found"},
             status=404
         )
+
+def generate_progress_id():
+    """
+    Tạo progress_id tự động: PRG0001, PRG0002, ...
+    """
+    # Lấy progress cuối cùng
+    last_progress = FlashcardProgress.objects.order_by('-progress_id').first()
+    
+    if not last_progress:
+        return "PRG0001"
+    
+    try:
+        # Lấy số từ progress_id (bỏ 3 ký tự đầu "PRG")
+        last_number = int(last_progress.progress_id[3:])
+        new_number = last_number + 1
+        return f"PRG{new_number:04d}"  # 4 chữ số, thêm số 0 ở đầu
+    except (ValueError, IndexError):
+        # Nếu có lỗi, trả về mặc định
+        return "PRG0001"
+
+# views.py - thêm view sau
+@role_required('user')
+def essay_mode_view(request, set_id):
+    """
+    Chế độ tự luận: hiển thị câu hỏi flashcard, người dùng nhập câu trả lời
+    """
+    
+    # Lấy set
+    flashcard_set = get_object_or_404(FlashcardSet, set_id=set_id)
+    
+    # Lấy tất cả flashcard trong set
+    flashcards = FlashcardItem.objects.filter(
+        set=flashcard_set,
+        is_deleted=False
+    )
+    
+    if request.method == 'POST':
+        # Lấy user từ session
+        user_id = request.session.get('user_id')
+        from django.contrib.auth import get_user_model
+        
+        try:
+            user = User.objects.get(user_id=user_id)
+        except User.DoesNotExist:
+            return HttpResponse('<script>alert("Tài khoản không tồn tại."); window.location.href="/users/login/";</script>')
+        
+        correct_count = 0
+        total_questions = flashcards.count()
+        
+        for flashcard in flashcards:
+            answer_key = f'answer_{flashcard.card_id}'
+            user_answer = request.POST.get(answer_key, '').strip().lower()
+            correct_answer = flashcard.answer.strip().lower()
+            
+            # So sánh câu trả lời
+            is_correct = user_answer == correct_answer
+            
+            if is_correct:
+                correct_count += 1
+                
+                # SỬA: Dùng update_or_create
+                try:
+                    # Thử lấy progress hiện có
+                    progress = FlashcardProgress.objects.get(
+                        card=flashcard,
+                        user=user
+                    )
+                    # Nếu tồn tại, cập nhật
+                    progress.status = 'known'
+                    progress.last_reviewed = timezone.now()
+                    progress.save()
+                except FlashcardProgress.DoesNotExist:
+                    # Nếu không tồn tại, tạo mới
+                    FlashcardProgress.objects.create(
+                        progress_id=generate_progress_id(),
+                        card=flashcard,
+                        user=user,
+                        status='known',
+                        last_reviewed=timezone.now()
+                    )
+                
+                # Cập nhật learned status
+                flashcard.learned = True
+                flashcard.save()
+        
+        # Tính điểm
+        score_percentage = (correct_count / total_questions * 100) if total_questions > 0 else 0
+        
+        from datetime import datetime
+        request.session['essay_results'] = {
+            'set_id': set_id,
+            'correct_count': correct_count,
+            'total_questions': total_questions,
+            'score_percentage': score_percentage,
+            'flashcard_set_title': flashcard_set.title,
+            'submitted_at': datetime.now().strftime('%H:%M %d/%m/%Y'),  # Thêm timestamp
+            'user_id': user_id  # Thêm user_id để kiểm tra
+        }
+
+        # Xóa session cũ để tránh cache
+        request.session.modified = True
+        
+        # Redirect đến trang kết quả
+        return redirect('flashcards:essay_results', set_id=set_id)
+    
+    # GET request: hiển thị form
+    context = {
+        'flashcard_set': flashcard_set,
+        'flashcards': flashcards,
+        'total_count': flashcards.count(),
+    }
+    
+    return render(request, 'flashcards/essay_mode.html', context)
+
+@role_required('user')
+def essay_results_view(request, set_id):
+    """
+    Hiển thị kết quả bài làm tự luận
+    """
+    flashcard_set = get_object_or_404(FlashcardSet, set_id=set_id)
+    
+    # Lấy user từ session (giống như trong essay_mode_view)
+    user_id = request.session.get('user_id')
+    try:
+        user = User.objects.get(user_id=user_id)
+    except User.DoesNotExist:
+        return HttpResponse('<script>alert("Tài khoản không tồn tại."); window.location.href="/users/login/";</script>')
+    
+    # Lấy progress của user cho set này
+    flashcards = FlashcardItem.objects.filter(
+        set=flashcard_set,
+        is_deleted=False
+    )
+    
+    progress_list = []
+    for flashcard in flashcards:
+        try:
+            progress = FlashcardProgress.objects.get(
+                card=flashcard,
+                user=user  # Sử dụng user từ session
+            )
+            progress_list.append({
+                'flashcard': flashcard,
+                'progress': progress,
+                'status': progress.status
+            })
+        except FlashcardProgress.DoesNotExist:
+            progress_list.append({
+                'flashcard': flashcard,
+                'progress': None,
+                'status': 'unknown'
+            })
+    
+    # Lấy kết quả từ session để hiển thị số câu đúng
+    essay_results = request.session.get('essay_results', {})
+    correct_count = essay_results.get('correct_count', 0)
+    total_questions = essay_results.get('total_questions', flashcards.count())
+    score_percentage = essay_results.get('score_percentage', 0)
+    
+    # Tính thống kê từ progress
+    known_count = sum(1 for p in progress_list if p['status'] == 'known')
+    total_count = len(progress_list)
+    
+    return render(request, 'flashcards/essay_results.html', {
+        'flashcard_set': flashcard_set,
+        'progress_list': progress_list,
+        'known_count': known_count,
+        'correct_count': correct_count,  # Thêm vào context
+        'total_count': total_count,
+        'total_questions': total_questions,
+        'score_percentage': score_percentage,
+        'percentage': (known_count / total_count * 100) if total_count > 0 else 0,
+        'essay_results': essay_results,  # Truyền toàn bộ kết quả
+    })
+
+
+# View để xem chi tiết từng câu trả lời
+@role_required('user')
+def review_essay_answers(request, set_id):
+    """
+    Xem lại câu trả lời tự luận (nếu lưu lại)
+    """
+    flashcard_set = get_object_or_404(FlashcardSet, set_id=set_id)
+    
+    # Trong thực tế, bạn có thể muốn lưu câu trả lời của user
+    # Tạm thời hiển thị flashcard và đáp án
+    flashcards = FlashcardItem.objects.filter(
+        set=flashcard_set,
+        is_deleted=False
+    )
+    
+    return render(request, 'flashcards/review_essay.html', {
+        'flashcard_set': flashcard_set,
+        'flashcards': flashcards,
+    })

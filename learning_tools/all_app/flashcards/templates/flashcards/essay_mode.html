@@ -1,0 +1,243 @@
+<!-- flashcard/templates/flashcards/essay_mode.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Exam Mode - Tự luận</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #4CAF50;
+        }
+        
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+        }
+        
+        .question-card {
+            background: #f9f9f9;
+            border-left: 4px solid #4CAF50;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        
+        .question-number {
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        
+        .question-text {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .answer-textarea {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            resize: vertical;
+        }
+        
+        .answer-textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        
+        .submit-btn {
+            display: block;
+            width: 200px;
+            margin: 30px auto 0;
+            padding: 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .submit-btn:hover {
+            background: #45a049;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        .back-btn:hover {
+            background: #5a6268;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 5px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Exam Mode - Tự luận</h1>
+            <p>{{ flashcard_set.title }}</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value">{{ total_count }}</div>
+                <div class="stat-label">Tổng số câu</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ flashcards.count }}</div>
+                <div class="stat-label">Số câu hỏi</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">--:--</div>
+                <div class="stat-label">Thời gian</div>
+            </div>
+        </div>
+        
+        <form method="POST">
+            {% csrf_token %}
+            
+            {% for flashcard in flashcards %}
+            <div class="question-card">
+                <div class="question-number">Câu {{ forloop.counter }}</div>
+                <div class="question-text">{{ flashcard.question }}</div>
+                <textarea 
+                    name="answer_{{ flashcard.card_id }}" 
+                    class="answer-textarea" 
+                    placeholder="Nhập câu trả lời của bạn..."
+                    required></textarea>
+            </div>
+            {% empty %}
+            <div style="text-align: center; padding: 40px; color: #666;">
+                <p>Không có câu hỏi nào trong set này.</p>
+            </div>
+            {% endfor %}
+            
+            {% if flashcards %}
+            <button type="submit" class="submit-btn">📤 Nộp bài</button>
+            {% endif %}
+        </form>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="{% url 'flashcards:home' %}" class="back-btn">← Quay về trang chủ</a>
+        </div>
+    </div>
+    
+    <script>
+        // Đếm ngược thời gian (tùy chọn)
+        let timeLeft = 3600; // 60 phút
+        const timerElement = document.querySelector('.stat-value:nth-child(3)');
+        
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft > 0) {
+                timeLeft--;
+            } else {
+                // Tự động nộp bài khi hết giờ
+                alert('Hết giờ! Bài làm sẽ được nộp tự động.');
+                document.querySelector('form').submit();
+            }
+        }
+        
+        // Cập nhật timer mỗi giây
+        setInterval(updateTimer, 1000);
+        updateTimer();
+        
+        // Lưu bài tạm thời
+        document.querySelectorAll('.answer-textarea').forEach(textarea => {
+            const key = `essay_${textarea.name}`;
+            
+            // Load câu trả lời đã lưu
+            const saved = localStorage.getItem(key);
+            if (saved) {
+                textarea.value = saved;
+            }
+            
+            // Lưu khi người dùng nhập
+            textarea.addEventListener('input', function() {
+                localStorage.setItem(key, this.value);
+            });
+        });
+        
+        // Xác nhận trước khi rời trang
+        window.addEventListener('beforeunload', function(e) {
+            const hasUnsaved = Array.from(document.querySelectorAll('.answer-textarea'))
+                .some(textarea => textarea.value.trim() !== '');
+            
+            if (hasUnsaved) {
+                e.preventDefault();
+                e.returnValue = 'Bạn có câu trả lời chưa nộp. Bạn có chắc muốn rời đi?';
+            }
+        });
+    </script>
+</body>
+</html>
