@@ -1,7 +1,7 @@
 
 <ul class="nav">
     
-        <li style="margin-top: 10px;"><a href="">
+        <li style="margin-top: 10px;" class="{% if 'dashboard' in request.path %}active{% endif %}"><a href="{% url 'dashboard:home' %}">
             <i class="fa-solid fa-house"></i>
         </a></li>
         <li class="{% if 'todolist' in request.path %}active{% endif %}"><a href="{% url 'to_do_list:home' %}">
@@ -16,7 +16,7 @@
         <li><a href="">
             <i class="fa-regular fa-circle-check"></i>
         </a></li>
-        <li><a href="">
+        <li class="{% if 'pomodoro' in request.path %}active{% endif %}"><a href="{% url 'pomodoro:home' %}">
             <i class="fa-solid fa-clock-rotate-left"></i>
         </a></li>
 </ul>

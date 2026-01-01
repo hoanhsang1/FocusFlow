@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from .users_form import *
 from .users_models import *
@@ -8,6 +9,8 @@ from django.db import IntegrityError
 import requests
 from django.conf import settings
 from django.contrib import messages
+from .services import MediaService
+from .check_login_role import *
 
 # Create your views here.
 def show_login(request):
@@ -90,13 +93,13 @@ def register_user(request):
                 from all_app.flashcards.flashcards_models import Flashcard  
                 flashcard = Flashcard.objects.create(user=user)
                 
-                from all_app.habit.habit_models import Habit
+                from all_app.habit.models import Habit
                 habit = Habit.objects.create(user=user)
                 
                 from all_app.pomodoro.pomodoro_models import Pomodoro
                 pomodoro = Pomodoro.objects.create(user=user, title="My Pomodoro")
 
-                from all_app.calendar_app.calendar_models import Calendar
+                from all_app.calendar_app.models import Calendar
                 calendar = Calendar.objects.create(user=user, name="My Calendar")
 
                 request.session['user_id'] = user.user_id
@@ -116,6 +119,19 @@ def register_user(request):
         else:
             return render(request, 'users/authenticate_page.html', {'page': 'register', 'form': form, 'error': 'Email đã tồn tại'})
 
+def logout_view(request):
+    """Đăng xuất"""
+    # Xóa session
+    if 'user_id' in request.session:
+        del request.session['user_id']
+    if 'role' in request.session:
+        del request.session['role']
+    
+    # Xóa cả session
+    request.session.flush()
+    
+    messages.success(request, 'Đã đăng xuất thành công!')
+    return redirect('users:login_form')
 
 def google_login(request):
     """Redirect đến Google OAuth page"""
@@ -265,7 +281,7 @@ def google_callback(request):
                     print(f"[GOOGLE DEBUG] Flashcard created: {flashcard.flashcard_id}")
                     
                     print(f"[GOOGLE DEBUG] Creating Habit...")
-                    from all_app.habit.habit_models import Habit
+                    from all_app.habit.models import Habit
                     habit = Habit.objects.create(user=user)
                     print(f"[GOOGLE DEBUG] Habit created: {habit.habit_id}")
                     
@@ -275,7 +291,7 @@ def google_callback(request):
                     print(f"[GOOGLE DEBUG] Pomodoro created: {pomodoro.pomodoro_id}")
                     
                     print(f"[GOOGLE DEBUG] Creating Calendar...")
-                    from all_app.calendar_app.calendar_models import Calendar
+                    from all_app.calendar_app.models import Calendar
                     calendar = Calendar.objects.create(user=user, name="My Calendar")
                     print(f"[GOOGLE DEBUG] Calendar created: {calendar.calendar_id}")
                     
@@ -339,4 +355,169 @@ def google_callback(request):
         messages.error(request, f"Lỗi hệ thống: {str(e)}")
         return redirect('users:login_form')
     
+# all_app/users/views.py
+@role_required('user')
+def profile_view(request):
+    """Trang profile của user - FIXED"""
+    user = User.objects.get(user_id=request.session['user_id'])
+    
+    # DEBUG chi tiết
+    print(f"\n{'='*60}")
+    print(f"[PROFILE VIEW] Request for user: {user.user_id}")
+    print(f"[PROFILE VIEW] Session data:")
+    for key in ['user_id', 'username', 'role']:
+        print(f"  {key}: {request.session.get(key)}")
+    
+    # Lấy avatar URL từ service
+    from .services import MediaService
+    avatar_url = MediaService.get_avatar_url(user)
+    
+    print(f"[PROFILE VIEW] Avatar URL from service: {avatar_url}")
+    
+    # Cập nhật vào session để header dùng
+    request.session['avatar_url'] = avatar_url
+    print(f"[PROFILE VIEW] Session avatar_url updated: {avatar_url}")
+    
+    # Kiểm tra file vật lý
+    if avatar_url and avatar_url.startswith('/media/'):
+        import os
+        from django.conf import settings
+        filename = avatar_url.replace('/media/', '')
+        filepath = os.path.join(settings.MEDIA_ROOT, filename)
+        print(f"[PROFILE VIEW] Physical file: {filepath}")
+        print(f"[PROFILE VIEW] File exists: {os.path.exists(filepath)}")
+    
+    print(f"{'='*60}\n")
+    
+    context = {
+        'user': user,
+        'avatar_url': avatar_url,
+    }
+    return render(request, 'users/profile.html', context)
 
+@role_required('user')
+def edit_profile(request):
+    """Chỉnh sửa thông tin cá nhân - FIXED"""
+    user = User.objects.get(user_id=request.session['user_id'])
+    
+    # DEBUG
+    print(f"\n[EDIT PROFILE VIEW] User: {user.user_id}")
+    
+    # Lấy avatar URL
+    from .services import MediaService
+    avatar_url = MediaService.get_avatar_url(user)
+    
+    print(f"[EDIT PROFILE VIEW] Avatar URL: {avatar_url}")
+    
+    if request.method == 'POST':
+        # ... phần xử lý form giữ nguyên ...
+        pass
+    
+    context = {
+        'user': user,
+        'avatar_url': avatar_url,  # Đảm bảo truyền đúng
+    }
+    return render(request, 'users/edit_profile.html', context)
+# all_app/users/views.py - SỬA upload_avatar
+@role_required('user')
+def upload_avatar(request):
+    """API upload avatar (AJAX) - UPDATED"""
+    user = User.objects.get(user_id=request.session['user_id'])
+    
+    print(f"\n{'='*60}")
+    print(f"[UPLOAD AVATAR] User: {user.user_id}")
+    
+    if 'avatar' not in request.FILES:
+        print("[UPLOAD AVATAR] ERROR: No file in request")
+        return JsonResponse({'success': False, 'error': 'Không có file'})
+    
+    image_file = request.FILES['avatar']
+    print(f"[UPLOAD AVATAR] File: {image_file.name} ({image_file.size} bytes)")
+    
+    # Validate
+    allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if image_file.content_type not in allowed_types:
+        print(f"[UPLOAD AVATAR] ERROR: Invalid type")
+        return JsonResponse({'success': False, 'error': 'Chỉ chấp nhận file ảnh'})
+    
+    if image_file.size > 5 * 1024 * 1024:
+        print(f"[UPLOAD AVATAR] ERROR: File too large")
+        return JsonResponse({'success': False, 'error': 'File quá lớn (tối đa 5MB)'})
+    
+    try:
+        from .services import MediaService
+        media_file = MediaService.upload_avatar(user, image_file)
+        
+        print(f"[UPLOAD AVATAR] Success! MediaFile ID: {media_file.id}")
+        
+        # Lấy URL đúng
+        avatar_url = f"/media/{media_file.file}"
+        print(f"[UPLOAD AVATAR] Avatar URL: {avatar_url}")
+        
+        # Cập nhật session
+        request.session['avatar_url'] = avatar_url
+        print(f"[UPLOAD AVATAR] Session updated")
+        
+        return JsonResponse({
+            'success': True,
+            'avatar_url': avatar_url,
+            'message': 'Cập nhật avatar thành công!'
+        })
+        
+    except Exception as e:
+        print(f"[UPLOAD AVATAR] ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@role_required('user')
+def get_user_info(request):
+    """API lấy thông tin user (cho các app khác sử dụng)"""
+    user = User.objects.get(user_id=request.session['user_id'])
+    
+    data = {
+        'user_id': user.user_id,
+        'username': user.username,
+        'fullname': user.fullname,
+        'email': user.email,
+        'avatar_url': MediaService.get_avatar_url(user),
+        'role': user.role,
+    }
+    
+    return JsonResponse(data)
+
+@role_required('user')
+def edit_profile(request):
+    """Chỉnh sửa thông tin cá nhân"""
+    user = User.objects.get(user_id=request.session['user_id'])
+    
+    if request.method == 'POST':
+        fullname = request.POST.get('fullname', '').strip()
+        email = request.POST.get('email', '').strip()
+        
+        # Validate và cập nhật
+        errors = []
+        
+        if fullname:
+            user.fullname = fullname
+        
+        if email:
+            # Kiểm tra email đã tồn tại chưa (trừ email của chính user)
+            if User.objects.filter(email=email).exclude(user_id=user.user_id).exists():
+                errors.append('Email đã được sử dụng bởi tài khoản khác')
+            else:
+                user.email = email
+        
+        if not errors:
+            user.save()
+            messages.success(request, 'Cập nhật thông tin thành công!')
+            return redirect('users:profile')
+        else:
+            for error in errors:
+                messages.error(request, error)
+    
+    context = {
+        'user': user,
+        'avatar_url': MediaService.get_avatar_url(user),
+    }
+    return render(request, 'users/edit_profile.html', context)

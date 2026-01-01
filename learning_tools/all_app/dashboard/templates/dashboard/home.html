@@ -1,0 +1,974 @@
+<!-- all_app/dashboard/templates/dashboard/home.html -->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow - Dashboard</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --success-color: #1cc88a;
+            --info-color: #36b9cc;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+            --secondary-color: #858796;
+            --light-color: #f8f9fc;
+            --dark-color: #5a5c69;
+        }
+        
+        body {
+            background-color: #f8f9fc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid #e3e6f0;
+            font-weight: 600;
+            padding: 1rem 1.35rem;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        
+        .stat-card {
+            border-left: 4px solid;
+        }
+        
+        .stat-card.primary {
+            border-left-color: var(--primary-color);
+        }
+        
+        .stat-card.success {
+            border-left-color: var(--success-color);
+        }
+        
+        .stat-card.warning {
+            border-left-color: var(--warning-color);
+        }
+        
+        .stat-card.danger {
+            border-left-color: var(--danger-color);
+        }
+        
+        .stat-card.info {
+            border-left-color: var(--info-color);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        .progress {
+            height: 10px;
+            border-radius: 5px;
+        }
+        
+        .habit-btn-group .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .activity-item {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .btn-start-session {
+            background: linear-gradient(45deg, var(--primary-color), #2e59d9);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+        }
+        
+        .btn-start-session:hover {
+            background: linear-gradient(45deg, #2e59d9, var(--primary-color));
+        }
+        
+        .productivity-score {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--primary-color), var(--success-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .streak-badge {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: #333;
+            font-weight: 700;
+        }
+        
+        .widget-settings {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+        
+        .widget-settings:hover {
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .stat-number {
+                font-size: 1.5rem;
+            }
+            
+            .card {
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-bolt me-2"></i>FocusFlow
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">
+                            <i class="fas fa-home me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/pomodoro/">
+                            <i class="fas fa-clock me-1"></i>Pomodoro
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/todo/">
+                            <i class="fas fa-tasks me-1"></i>Tasks
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/calendar/">
+                            <i class="fas fa-calendar-alt me-1"></i>Calendar
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/habits/">
+                            <i class="fas fa-star me-1"></i>Habits
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/flashcards/">
+                            <i class="fas fa-brain me-1"></i>Flashcards
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <span class="text-muted">Welcome,</span>
+                        <strong class="ms-1">{{ user.first_name|default:user.username }}</strong>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" 
+                                data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/users/profile/">
+                                <i class="fas fa-user me-2"></i>Profile
+                            </a></li>
+                            <li><a class="dropdown-item" href="/users/settings/">
+                                <i class="fas fa-cog me-2"></i>Settings
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/users/logout/">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="h3 mb-2">Dashboard</h1>
+                <p class="text-muted">
+                    <i class="fas fa-calendar-day me-1"></i>
+                    {{ today|date:"l, F j, Y" }}
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-primary btn-start-session" onclick="startPomodoro()">
+                    <i class="fas fa-play-circle me-2"></i>Start Focus Session
+                </button>
+            </div>
+        </div>
+
+        <!-- Productivity Score -->
+        {% if show_productivity %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Today's Productivity</h5>
+                        <div>
+                            <span class="badge bg-success me-2">
+                                <i class="fas fa-fire me-1"></i>{{ productivity_stats.streak_days }} day streak
+                            </span>
+                            <span class="badge bg-info">
+                                Avg: {{ productivity_stats.weekly_average|floatformat:1 }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-3 text-center">
+                                <div class="productivity-score mb-2">
+                                    {{ productivity_stats.today_score }}
+                                </div>
+                                <div class="text-muted">/ 100 points</div>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="row text-center">
+                                    <div class="col">
+                                        <div class="h4 text-success">{{ pomodoro_stats.today_sessions }}</div>
+                                        <small class="text-muted">Pomodoro Sessions</small>
+                                    </div>
+                                    <div class="col">
+                                        <div class="h4 text-primary">{{ todo_stats.completed_today }}</div>
+                                        <small class="text-muted">Tasks Completed</small>
+                                    </div>
+                                    <div class="col">
+                                        <div class="h4 text-warning">
+                                            {{ habits_today|length }}
+                                        </div>
+                                        <small class="text-muted">Today's Habits</small>
+                                    </div>
+                                    <div class="col">
+                                        <div class="h4 text-info">
+                                            {{ productivity_stats.goals_completed.completed }}/{{ productivity_stats.goals_completed.total }}
+                                        </div>
+                                        <small class="text-muted">Goals Met</small>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small>Progress</small>
+                                        <small>{{ productivity_stats.today_score }}%</small>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                             role="progressbar" 
+                                             style="width: {{ productivity_stats.today_score }}%">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Main Dashboard Grid -->
+        <div class="row">
+            <!-- Left Column -->
+            <div class="col-lg-6">
+                <!-- Pomodoro Widget -->
+                {% if show_pomodoro %}
+                <div class="card stat-card primary mb-4" id="pomodoro-widget">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clock me-2 text-primary"></i>Focus Sessions
+                        </h5>
+                        <div class="widget-settings">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if pomodoro_stats.active_session %}
+                        <div class="alert alert-warning mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-running fa-2x me-3"></i>
+                                <div>
+                                    <strong>Session in progress</strong>
+                                    <div class="small">Currently in {{ pomodoro_stats.active_session.current_session }} session</div>
+                                </div>
+                                <button class="btn btn-sm btn-primary ms-auto" onclick="goToPomodoro()">
+                                    Resume <i class="fas fa-arrow-right ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="row text-center mb-3">
+                            <div class="col">
+                                <div class="stat-number text-primary">{{ pomodoro_stats.today_sessions }}</div>
+                                <small class="text-muted">Today</small>
+                            </div>
+                            <div class="col">
+                                <div class="stat-number text-primary">{{ pomodoro_stats.week_sessions }}</div>
+                                <small class="text-muted">This Week</small>
+                            </div>
+                            <div class="col">
+                                <div class="stat-number text-primary">{{ pomodoro_stats.total_sessions }}</div>
+                                <small class="text-muted">Total</small>
+                            </div>
+                            <div class="col">
+                                <div class="stat-number text-primary">{{ pomodoro_stats.avg_daily_sessions }}</div>
+                                <small class="text-muted">Avg/Day</small>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <a href="/pomodoro/" class="btn btn-outline-primary">
+                                <i class="fas fa-history me-2"></i>View History
+                            </a>
+                            <button class="btn btn-primary" onclick="startPomodoro()">
+                                <i class="fas fa-play me-2"></i>Start New Session
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Habits Widget -->
+                {% if show_habits %}
+                <div class="card stat-card warning mb-4" id="habits-widget">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-star me-2 text-warning"></i>Today's Habits
+                        </h5>
+                        <a href="/habits/" class="btn btn-sm btn-outline-warning">View All</a>
+                    </div>
+                    <div class="card-body">
+                        {% if habits_today %}
+                            {% for habit in habits_today %}
+                            <div class="habit-item mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div>
+                                        <strong>{{ habit.name }}</strong>
+                                        {% if habit.description %}
+                                        <p class="small text-muted mb-0">{{ habit.description|truncatechars:60 }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="btn-group habit-btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-outline-success habit-check" 
+                                                data-habit-id="{{ habit.habit_id }}" data-status="completed"
+                                                {% if habit.today_status == 'completed' %}disabled{% endif %}>
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-warning habit-check" 
+                                                data-habit-id="{{ habit.habit_id }}" data-status="partial"
+                                                {% if habit.today_status == 'partial' %}disabled{% endif %}>
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger habit-check" 
+                                                data-habit-id="{{ habit.habit_id }}" data-status="skipped"
+                                                {% if habit.today_status == 'skipped' %}disabled{% endif %}>
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="progress" style="height: 5px;">
+                                    {% if habit.today_status == 'completed' %}
+                                    <div class="progress-bar bg-success" style="width: 100%"></div>
+                                    {% elif habit.today_status == 'partial' %}
+                                    <div class="progress-bar bg-warning" style="width: 50%"></div>
+                                    {% elif habit.today_status == 'skipped' %}
+                                    <div class="progress-bar bg-danger" style="width: 100%"></div>
+                                    {% else %}
+                                    <div class="progress-bar bg-secondary" style="width: 0%"></div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No habits scheduled for today</p>
+                                <a href="/habits/" class="btn btn-outline-warning">Create Habit</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Flashcards Widget -->
+                {% if show_flashcards %}
+                <div class="card stat-card info mb-4" id="flashcards-widget">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-brain me-2 text-info"></i>Flashcards
+                        </h5>
+                        <a href="/flashcards/" class="btn btn-sm btn-outline-info">Manage</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center mb-4">
+                            <div class="col">
+                                <div class="stat-number text-info">{{ flashcard_stats.total_sets }}</div>
+                                <small class="text-muted">Sets</small>
+                            </div>
+                            <div class="col">
+                                <div class="stat-number text-info">{{ flashcard_stats.total_cards }}</div>
+                                <small class="text-muted">Cards</small>
+                            </div>
+                            <div class="col">
+                                <div class="stat-number text-warning">{{ flashcard_stats.due_for_review }}</div>
+                                <small class="text-muted">Due</small>
+                            </div>
+                        </div>
+                        
+                        {% if flashcard_stats.due_for_review > 0 %}
+                        <div class="alert alert-warning">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-exclamation-circle fa-2x me-3"></i>
+                                <div>
+                                    <strong>{{ flashcard_stats.due_for_review }} cards</strong> need review
+                                    <div class="small">Don't forget your daily practice!</div>
+                                </div>
+                                <a href="/flashcards/review/" class="btn btn-warning ms-auto">
+                                    Review Now
+                                </a>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-check-circle fa-2x text-success mb-3"></i>
+                            <p class="text-muted">All caught up! No reviews due.</p>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-grid">
+                            <a href="/flashcards/create/" class="btn btn-outline-info">
+                                <i class="fas fa-plus me-2"></i>Create New Set
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Right Column -->
+            <div class="col-lg-6">
+                <!-- Tasks Widget -->
+                {% if show_todo %}
+                <div class="card stat-card success mb-4" id="todo-widget">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tasks me-2 text-success"></i>Tasks Overview
+                        </h5>
+                        <a href="/todo/" class="btn btn-sm btn-outline-success">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center mb-4">
+                            <div class="col">
+                                <div class="stat-number text-success">{{ todo_stats.completed_today }}</div>
+                                <small class="text-muted">Done Today</small>
+                            </div>
+                            <div class="col">
+                                <div class="stat-number text-warning">{{ todo_stats.pending_tasks }}</div>
+                                <small class="text-muted">Pending</small>
+                            </div>
+                            <div class="col">
+                                <div class="stat-number text-danger">{{ todo_stats.urgent_tasks }}</div>
+                                <small class="text-muted">Urgent</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Task Form -->
+                        <form id="quickTaskForm" class="mb-4">
+                            {% csrf_token %}
+                            <div class="input-group">
+                                <input type="text" id="quickTaskInput" class="form-control" 
+                                       placeholder="What needs to be done?" required>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <!-- Recent Tasks -->
+                        <h6 class="mb-3">Recent Tasks</h6>
+                        {% if todo_stats.recent_tasks %}
+                            {% for task in todo_stats.recent_tasks %}
+                            <div class="task-item mb-2 d-flex align-items-center">
+                                <input type="checkbox" class="form-check-input me-3" 
+                                       id="task-{{ task.task_id }}" 
+                                       {% if task.completed %}checked disabled{% endif %}>
+                                <label for="task-{{ task.task_id }}" class="mb-0 flex-grow-1">
+                                    {{ task.title }}
+                                    {% if task.due_date %}
+                                    <small class="text-muted ms-2">
+                                        <i class="far fa-calendar"></i> {{ task.due_date|date:"M d" }}
+                                    </small>
+                                    {% endif %}
+                                </label>
+                                <span class="badge bg-{{ task.priority }} ms-2">
+                                    {{ task.get_priority_display }}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted text-center py-3">No pending tasks</p>
+                        {% endif %}
+                        
+                        {% if todo_stats.overdue_tasks > 0 %}
+                        <div class="alert alert-danger mt-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            {{ todo_stats.overdue_tasks }} task(s) overdue!
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Calendar Widget -->
+                {% if show_calendar %}
+                <div class="card stat-card primary mb-4" id="calendar-widget">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calendar-alt me-2 text-primary"></i>Upcoming Events
+                        </h5>
+                        <a href="/calendar/" class="btn btn-sm btn-outline-primary">View Calendar</a>
+                    </div>
+                    <div class="card-body">
+                        {% if upcoming_events %}
+                            {% for event in upcoming_events %}
+                            <div class="event-item mb-3">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-3 text-center">
+                                        <div class="text-primary fw-bold">{{ event.start_time|date:"M" }}</div>
+                                        <div class="h4">{{ event.start_time|date:"d" }}</div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <strong>{{ event.title }}</strong>
+                                        <div class="small text-muted">
+                                            <i class="far fa-clock me-1"></i>
+                                            {{ event.start_time|time }} - {{ event.end_time|time }}
+                                        </div>
+                                        {% if event.description %}
+                                        <p class="small mb-0 mt-1">{{ event.description|truncatechars:80 }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% if not forloop.last %}<hr class="my-2">{% endif %}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="far fa-calendar fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No upcoming events</p>
+                                <a href="/calendar/create/" class="btn btn-outline-primary">
+                                    <i class="fas fa-plus me-2"></i>Add Event
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Weekly Stats Widget -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line me-2 text-success"></i>Weekly Overview
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="weeklyChart" height="150"></canvas>
+                        <div class="row text-center mt-3">
+                            <div class="col">
+                                <div class="h5 text-success">{{ weekly_stats.tasks_completed }}</div>
+                                <small class="text-muted">Tasks Done</small>
+                            </div>
+                            <div class="col">
+                                <div class="h5 text-primary">{{ weekly_stats.habits_completed }}</div>
+                                <small class="text-muted">Habits Tracked</small>
+                            </div>
+                            <div class="col">
+                                <div class="h5 text-warning">{{ weekly_stats.pomodoro_by_day|length }}</div>
+                                <small class="text-muted">Active Days</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-history me-2"></i>Recent Activity
+                        </h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="refreshActivity()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="activityFeed">
+                            {% for activity in recent_activities %}
+                            <div class="activity-item d-flex">
+                                <div class="activity-icon me-3 bg-{{ activity.metadata.color|default:'light' }} text-{{ activity.metadata.color|default:'secondary' }}">
+                                    <i class="{{ activity.metadata.icon|default:'fas fa-circle' }}"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="mb-1">{{ activity.description }}</div>
+                                    <small class="text-muted">
+                                        <i class="far fa-clock me-1"></i>
+                                        {{ activity.created_at|timesince }} ago
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">{{ activity.created_at|date:"M d" }}</small>
+                                    <div class="badge bg-{{ activity.metadata.color|default:'secondary' }}">
+                                        {{ activity.get_activity_type_display }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No recent activity</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5 py-4 bg-white border-top">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">
+                        &copy; {% now "Y" %} FocusFlow. All rights reserved.
+                    </p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="#" class="text-muted me-3">Privacy Policy</a>
+                    <a href="#" class="text-muted me-3">Terms of Service</a>
+                    <a href="#" class="text-muted">Help Center</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // CSRF Token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Notification System
+        function showNotification(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '1050';
+            alertDiv.style.minWidth = '300px';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 3000);
+        }
+        
+        // Quick Task Form
+        document.getElementById('quickTaskForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const taskInput = document.getElementById('quickTaskInput');
+            const taskTitle = taskInput.value.trim();
+            
+            if (!taskTitle) {
+                showNotification('Please enter a task title', 'warning');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('title', taskTitle);
+            formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+            
+            try {
+                const response = await fetch('/dashboard/quick-add-task/', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showNotification('Task added successfully!', 'success');
+                    taskInput.value = '';
+                    
+                    // Refresh task list
+                    refreshTaskList();
+                    refreshQuickStats();
+                } else {
+                    showNotification(data.message || 'Error adding task', 'danger');
+                }
+            } catch (error) {
+                showNotification('Network error. Please try again.', 'danger');
+            }
+        });
+        
+        // Habit Check Buttons
+        document.querySelectorAll('.habit-check').forEach(button => {
+            button.addEventListener('click', async function() {
+                const habitId = this.dataset.habitId;
+                const status = this.dataset.status;
+                
+                // Disable all buttons for this habit
+                const habitGroup = this.closest('.habit-btn-group');
+                habitGroup.querySelectorAll('button').forEach(btn => {
+                    btn.disabled = true;
+                });
+                this.disabled = false;
+                
+                try {
+                    const response = await fetch(`/dashboard/update-habit/${habitId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                            status: status,
+                            date: new Date().toISOString().split('T')[0]
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.status === 'success') {
+                        showNotification('Habit updated!', 'success');
+                        
+                        // Update progress bar
+                        const progressBar = this.closest('.habit-item').querySelector('.progress-bar');
+                        if (status === 'completed') {
+                            progressBar.className = 'progress-bar bg-success';
+                            progressBar.style.width = '100%';
+                        } else if (status === 'partial') {
+                            progressBar.className = 'progress-bar bg-warning';
+                            progressBar.style.width = '50%';
+                        } else if (status === 'skipped') {
+                            progressBar.className = 'progress-bar bg-danger';
+                            progressBar.style.width = '100%';
+                        }
+                        
+                        refreshQuickStats();
+                    }
+                } catch (error) {
+                    showNotification('Error updating habit', 'danger');
+                    // Re-enable buttons
+                    habitGroup.querySelectorAll('button').forEach(btn => {
+                        btn.disabled = false;
+                    });
+                }
+            });
+        });
+        
+        // Start Pomodoro
+        function startPomodoro() {
+            window.location.href = '/pomodoro/?auto_start=true';
+        }
+        
+        function goToPomodoro() {
+            window.location.href = '/pomodoro/';
+        }
+        
+        // Refresh Functions
+        async function refreshQuickStats() {
+            try {
+                const response = await fetch('/dashboard/quick-stats/');
+                const data = await response.json();
+                
+                // Update displayed stats if needed
+                console.log('Quick stats updated:', data);
+            } catch (error) {
+                console.error('Error refreshing stats:', error);
+            }
+        }
+        
+        async function refreshActivity() {
+            const activityFeed = document.getElementById('activityFeed');
+            activityFeed.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch('/dashboard/recent-activity/');
+                const data = await response.json();
+                
+                let activityHTML = '';
+                data.activities.forEach(activity => {
+                    activityHTML += `
+                        <div class="activity-item d-flex">
+                            <div class="activity-icon me-3 bg-${activity.color} text-white">
+                                <i class="${activity.icon}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="mb-1">${activity.description}</div>
+                                <small class="text-muted">
+                                    <i class="far fa-clock me-1"></i>
+                                    ${activity.time}
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">${activity.date}</small>
+                                <div class="badge bg-${activity.color}">
+                                    ${activity.type_display}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                activityFeed.innerHTML = activityHTML;
+                showNotification('Activity feed refreshed', 'success');
+            } catch (error) {
+                activityFeed.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-exclamation-triangle fa-2x text-danger mb-3"></i>
+                        <p class="text-muted">Error loading activity</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function refreshTaskList() {
+            // Implement task list refresh if needed
+            console.log('Refreshing task list...');
+        }
+        
+        // Weekly Chart
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('weeklyChart').getContext('2d');
+            const weeklyData = {{ weekly_stats.pomodoro_by_day|safe }};
+            
+            const labels = weeklyData.map(item => item.day);
+            const data = weeklyData.map(item => item.count);
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Pomodoro Sessions',
+                        data: data,
+                        backgroundColor: 'rgba(78, 115, 223, 0.5)',
+                        borderColor: 'rgba(78, 115, 223, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // Auto-refresh every 60 seconds
+            setInterval(refreshQuickStats, 60000);
+        });
+    </script>
+</body>
+</html>

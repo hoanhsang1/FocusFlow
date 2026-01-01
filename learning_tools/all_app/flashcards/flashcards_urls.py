@@ -13,4 +13,7 @@ urlpatterns = [
     path('home/delete_card/<str:cardID>',views.soft_delete_card, name='delete_card'),
     path('flashcard_learn/<str:card_id>/toggle-learned/', views.toggle_learned_status, name='toggle_learned'),
     path('home/study/<str:set_id>/flashcard', views.study_flashcard_mode, name='study_flashcard'),
+    path('set/<str:set_id>/essay/', views.essay_mode_view, name='essay_mode'),
+    path('set/<str:set_id>/essay/results/', views.essay_results_view, name='essay_results'),
+    path('set/<str:set_id>/essay/review/', views.review_essay_answers, name='review_essay'),
 ]
