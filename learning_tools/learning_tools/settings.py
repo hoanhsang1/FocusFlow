@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import pymysql
+pymysql.install_as_MySQLdb()
 import os
 
 from dotenv import load_dotenv  # Thêm dòng này
@@ -53,6 +55,7 @@ INSTALLED_APPS = [
     'all_app.pomodoro',
     'all_app.to_do_list',
     'all_app.users',
+    'all_app.dashboard',
     'all_app.admin_manage',
 ]
 
@@ -125,6 +128,10 @@ DATABASES = {
         'PASSWORD': 'S1a2n3g4@2006',     # Mật khẩu MySQL
         'HOST': 'localhost',             # Nếu là máy local
         'PORT': '3306',                  # Port mặc định của MySQL
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'charset': 'utf8mb4',
+        }
     }
 }
 

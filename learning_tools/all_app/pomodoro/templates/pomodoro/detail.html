@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ pomodoro.title }} - FocusFlow</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body {
+            background: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .detail-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-top: 30px;
+        }
+        
+        .pomodoro-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'pomodoro:home' %}">
+                <i class="fas fa-arrow-left me-2"></i>Back to Home
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="detail-card">
+            <!-- Pomodoro Header -->
+            <div class="pomodoro-header">
+                <h1 class="display-5 fw-bold">{{ pomodoro.title }}</h1>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <span class="badge bg-light text-dark me-2">
+                            <i class="fas fa-clock me-1"></i>Work: {{ pomodoro.work_duration }}min
+                        </span>
+                        <span class="badge bg-light text-dark">
+                            <i class="fas fa-coffee me-1"></i>Break: {{ pomodoro.break_duration }}min
+                        </span>
+                    </div>
+                    <span class="badge {% if pomodoro.status == 'running' %}bg-success{% elif pomodoro.status == 'paused' %}bg-warning{% else %}bg-secondary{% endif %} fs-5">
+                        {{ pomodoro.get_status_display|default:pomodoro.status }}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Control Buttons -->
+            <div class="text-center mb-4">
+                <div class="btn-group btn-group-lg">
+                    {% if pomodoro.status != 'running' %}
+                    <button class="btn btn-success me-2" onclick="startPomodoro('{{ pomodoro.pomodoro_id }}')">
+                        <i class="fas fa-play me-2"></i>Start
+                    </button>
+                    {% else %}
+                    <button class="btn btn-warning me-2" onclick="pausePomodoro('{{ pomodoro.pomodoro_id }}')">
+                        <i class="fas fa-pause me-2"></i>Pause
+                    </button>
+                    <button class="btn btn-danger" onclick="stopPomodoro('{{ pomodoro.pomodoro_id }}')">
+                        <i class="fas fa-stop me-2"></i>Stop
+                    </button>
+                    {% endif %}
+                    <button class="btn btn-info" onclick="completeSession('{{ pomodoro.pomodoro_id }}')">
+                        <i class="fas fa-check me-2"></i>Complete Session
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Stats -->
+            <div class="row mb-4">
+                <div class="col-md-4 text-center">
+                    <div class="p-3 border rounded">
+                        <h3 class="text-primary">{{ pomodoro.sessions_completed|default:"0" }}</h3>
+                        <p class="text-muted mb-0">Sessions Completed</p>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="p-3 border rounded">
+                        <h3 class="text-success">{{ pomodoro.work_duration }}</h3>
+                        <p class="text-muted mb-0">Work Duration (min)</p>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="p-3 border rounded">
+                        <h3 class="text-info">{{ pomodoro.break_duration }}</h3>
+                        <p class="text-muted mb-0">Break Duration (min)</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Session History -->
+            <h3 class="mb-3">
+                <i class="fas fa-history me-2"></i>Session History
+            </h3>
+            
+            {% if history %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Start Time</th>
+                            <th>Topic</th>
+                            <th>Duration</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in history %}
+                        <tr>
+                            <td>{{ item.start_time|date:"d/m/Y H:i" }}</td>
+                            <td>{{ item.study_topic|default:"No topic" }}</td>
+                            <td>{{ item.duration_minutes }} min</td>
+                            <td>
+                                {% if item.session_type %}
+                                <span class="badge {% if item.session_type == 'work' %}bg-danger{% else %}bg-info{% endif %}">
+                                    {{ item.session_type|title }}
+                                </span>
+                                {% else %}
+                                <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if item.status == 'completed' %}bg-success{% else %}bg-warning{% endif %}">
+                                    {{ item.get_status_display|default:item.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4 border rounded">
+                <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Sessions Recorded</h4>
+                <p class="text-muted">Start this Pomodoro to record sessions</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    function startPomodoro(pomodoroId) {
+        fetch('/pomodoro/home/start/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({pomodoro_id: pomodoroId}),
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    }
+    
+    function pausePomodoro(pomodoroId) {
+        fetch('/pomodoro/home/pause/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({pomodoro_id: pomodoroId}),
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+    
+    function stopPomodoro(pomodoroId) {
+        if (confirm('Stop this Pomodoro?')) {
+            fetch('/pomodoro/home/stop/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({pomodoro_id: pomodoroId}),
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        }
+    }
+    
+    function completeSession(pomodoroId) {
+        fetch('/pomodoro/home/complete/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({pomodoro_id: pomodoroId}),
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+    </script>
+</body>
+</html>

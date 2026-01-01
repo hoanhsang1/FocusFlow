@@ -93,13 +93,13 @@ def register_user(request):
                 from all_app.flashcards.flashcards_models import Flashcard  
                 flashcard = Flashcard.objects.create(user=user)
                 
-                from all_app.habit.habit_models import Habit
+                from all_app.habit.models import Habit
                 habit = Habit.objects.create(user=user)
                 
                 from all_app.pomodoro.pomodoro_models import Pomodoro
                 pomodoro = Pomodoro.objects.create(user=user, title="My Pomodoro")
 
-                from all_app.calendar_app.calendar_models import Calendar
+                from all_app.calendar_app.models import Calendar
                 calendar = Calendar.objects.create(user=user, name="My Calendar")
 
                 request.session['user_id'] = user.user_id
@@ -281,7 +281,7 @@ def google_callback(request):
                     print(f"[GOOGLE DEBUG] Flashcard created: {flashcard.flashcard_id}")
                     
                     print(f"[GOOGLE DEBUG] Creating Habit...")
-                    from all_app.habit.habit_models import Habit
+                    from all_app.habit.models import Habit
                     habit = Habit.objects.create(user=user)
                     print(f"[GOOGLE DEBUG] Habit created: {habit.habit_id}")
                     
@@ -291,7 +291,7 @@ def google_callback(request):
                     print(f"[GOOGLE DEBUG] Pomodoro created: {pomodoro.pomodoro_id}")
                     
                     print(f"[GOOGLE DEBUG] Creating Calendar...")
-                    from all_app.calendar_app.calendar_models import Calendar
+                    from all_app.calendar_app.models import Calendar
                     calendar = Calendar.objects.create(user=user, name="My Calendar")
                     print(f"[GOOGLE DEBUG] Calendar created: {calendar.calendar_id}")
                     

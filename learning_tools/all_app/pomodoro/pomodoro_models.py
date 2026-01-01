@@ -40,23 +40,35 @@ class Pomodoro(models.Model):
         return f"{self.title} ({self.status})"
     
     def get_current_duration(self):
-        """Lấy thời lượng hiện tại dựa trên session type"""
+        """Lấy thời lượng của session hiện tại"""
         if self.current_session == 'work':
             return self.work_duration
-        return self.break_duration
+        else:
+            return self.break_duration
+    
+    def get_duration_display(self):
+        """Hiển thị thời lượng"""
+        return f"{self.get_current_duration()} min"
     
     def start_timer(self):
         """Bắt đầu Pomodoro timer"""
+        # Kiểm tra xem đã có history record đang running chưa
+        existing_history = PomodoroHistory.objects.filter(
+            pomodoro=self,
+            end_time__isnull=True
+        ).first()
+        
+        if not existing_history:
+            # Tạo history record mới
+            PomodoroHistory.objects.create(
+                pomodoro=self,
+                start_time=timezone.now(),
+                study_topic=f"{self.title} - {self.current_session} session",
+                status='running'
+            )
+        
         self.status = 'running'
         self.save()
-        
-        # Tạo history record
-        PomodoroHistory.objects.create(
-            pomodoro=self,
-            start_time=timezone.now(),
-            study_topic=f"{self.title} - {self.current_session} session",
-            status='running'  # Tạm thời là running, sẽ update khi kết thúc
-        )
     
     def pause_timer(self):
         """Tạm dừng Pomodoro"""
@@ -68,7 +80,23 @@ class Pomodoro(models.Model):
         self.status = 'stopped'
         self.save()
         
-        # Cập nhật history record
+        # Cập nhật history record - chỉ cập nhật nếu đang running hoặc paused
+        if self.status in ['running', 'paused']:
+            history = PomodoroHistory.objects.filter(
+                pomodoro=self,
+                end_time__isnull=True
+            ).order_by('-start_time').first()
+            
+            if history:
+                history.end_time = timezone.now()
+                duration = (history.end_time - history.start_time).total_seconds() / 60
+                history.duration_minutes = int(duration)
+                history.status = 'interrupted'  # Dừng = interrupted
+                history.save()
+    
+    def complete_session(self):
+        """Hoàn thành một session"""
+        # Cập nhật history record trước khi chuyển session
         history = PomodoroHistory.objects.filter(
             pomodoro=self,
             end_time__isnull=True
@@ -80,15 +108,16 @@ class Pomodoro(models.Model):
             history.duration_minutes = int(duration)
             history.status = 'completed' if duration >= 1 else 'interrupted'
             history.save()
-    
-    def complete_session(self):
-        """Hoàn thành một session"""
+        
+        # Chuyển session
         if self.current_session == 'work':
             self.sessions_completed += 1
             self.current_session = 'break'
         else:
             self.current_session = 'work'
         
+        # Reset status để session mới cần bấm Start
+        self.status = 'stopped'
         self.save()
 
 
@@ -138,6 +167,15 @@ class PomodoroHistory(models.Model):
         """Soft delete history"""
         self.is_deleted = True
         self.save()
+    
+    def get_duration_minutes(self):
+        """Tính thời lượng session tính bằng phút"""
+        if self.end_time and self.start_time:
+            duration = self.end_time - self.start_time
+            return int(duration.total_seconds() / 60)
+        elif self.duration_minutes:
+            return self.duration_minutes
+        return 0
 
 
 class PomodoroSettings(models.Model):

@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', include('all_app.dashboard.urls')),
     path('calendar/', include('all_app.calendar_app.calendar_urls')),
     path('flashcards/', include('all_app.flashcards.flashcards_urls')),
     path('habit/', include('all_app.habit.habit_urls')),

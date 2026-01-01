@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
+from django.db import models
 from datetime import datetime, timedelta
 import json
 
@@ -28,11 +29,17 @@ def pomodoro_home(request):
     if not active_pomodoro:
         active_pomodoro = pomodoros.filter(status='paused').first()
     
-    # Lấy lịch sử gần đây (không bị xóa)
     recent_history = PomodoroHistory.objects.filter(
         pomodoro__user_id=user_id,
         is_deleted=False
     ).order_by('-start_time')[:10]
+
+    # Tính duration cho từng history nếu chưa có
+    for history in recent_history:
+        if not history.duration_minutes and history.end_time and history.start_time:
+            duration = (history.end_time - history.start_time).total_seconds() / 60
+            history.duration_minutes = int(duration)
+        history.save(update_fields=['duration_minutes'])
     
     # Thống kê hôm nay
     today = timezone.now().date()
@@ -56,7 +63,10 @@ def pomodoro_home(request):
         settings = PomodoroSettings.objects.create(
             user_id=user_id,
             default_work_duration=25,
-            default_break_duration=5
+            default_break_duration=5,
+            auto_start_break=False,  # Default: không tự động start
+            enable_sounds=True,
+            enable_notifications=True
         )
     
     context = {
@@ -64,7 +74,7 @@ def pomodoro_home(request):
         'active_pomodoro': active_pomodoro,
         'recent_history': recent_history,
         'today_stats': today_stats,
-        'settings': settings,
+        'settings': settings,  # Thêm settings vào context
         'page': 'pomodoro'
     }
     
@@ -366,7 +376,7 @@ def api_update_settings(request):
 @require_http_methods(["GET"])
 def api_get_pomodoro_status(request, pomodoro_id):
     """
-    API: Lấy trạng thái Pomodoro
+    API: Lấy trạng thái Pomodoro với thời gian chính xác
     """
     if 'user_id' not in request.session:
         return JsonResponse({'error': 'Not authenticated'}, status=401)
@@ -375,8 +385,9 @@ def api_get_pomodoro_status(request, pomodoro_id):
         user_id = request.session['user_id']
         pomodoro = Pomodoro.objects.get(pomodoro_id=pomodoro_id, user_id=user_id)
         
-        # Tính thời gian đã trôi qua nếu đang running
         elapsed_minutes = 0
+        remaining_minutes = pomodoro.get_current_duration()
+        
         if pomodoro.status == 'running':
             # Tìm history record gần nhất
             history = PomodoroHistory.objects.filter(
@@ -385,8 +396,10 @@ def api_get_pomodoro_status(request, pomodoro_id):
             ).order_by('-start_time').first()
             
             if history:
+                # Tính thời gian đã trôi qua
                 elapsed = (timezone.now() - history.start_time).total_seconds() / 60
                 elapsed_minutes = int(elapsed)
+                remaining_minutes = max(0, pomodoro.get_current_duration() - elapsed_minutes)
         
         return JsonResponse({
             'success': True,
@@ -399,7 +412,8 @@ def api_get_pomodoro_status(request, pomodoro_id):
                 'break_duration': pomodoro.break_duration,
                 'sessions_completed': pomodoro.sessions_completed,
                 'elapsed_minutes': elapsed_minutes,
-                'remaining_minutes': max(0, pomodoro.get_current_duration() - elapsed_minutes)
+                'remaining_minutes': remaining_minutes,
+                'remaining_seconds': remaining_minutes * 60
             }
         })
         
@@ -493,5 +507,85 @@ def api_get_statistics(request):
             'total_stats': total_stats
         })
         
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_update_timer(request):
+    """
+    API: Cập nhật thời gian cho Pomodoro
+    """
+    if 'user_id' not in request.session:
+        return JsonResponse({'error': 'Not authenticated'}, status=401)
+    
+    try:
+        data = json.loads(request.body)
+        user_id = request.session['user_id']
+        pomodoro_id = data.get('pomodoro_id')
+        session_type = data.get('session_type')
+        minutes = int(data.get('minutes', 25))
+        seconds = int(data.get('seconds', 0))
+        
+        pomodoro = Pomodoro.objects.get(pomodoro_id=pomodoro_id, user_id=user_id)
+        
+        # Update work or break duration
+        if session_type == 'work':
+            pomodoro.work_duration = minutes
+        elif session_type == 'break':
+            pomodoro.break_duration = minutes
+        
+        pomodoro.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Timer updated successfully'
+        })
+        
+    except Pomodoro.DoesNotExist:
+        return JsonResponse({'error': 'Pomodoro not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_update_duration(request):
+    """
+    API: Cập nhật thời gian work/break cho Pomodoro
+    """
+    if 'user_id' not in request.session:
+        return JsonResponse({'error': 'Not authenticated'}, status=401)
+    
+    try:
+        data = json.loads(request.body)
+        user_id = request.session['user_id']
+        pomodoro_id = data.get('pomodoro_id')
+        work_duration = int(data.get('work_duration', 25))
+        break_duration = int(data.get('break_duration', 5))
+        
+        pomodoro = Pomodoro.objects.get(pomodoro_id=pomodoro_id, user_id=user_id)
+        
+        # Validate durations
+        if work_duration < 1 or work_duration > 120:
+            return JsonResponse({'error': 'Work duration must be between 1 and 120 minutes'}, status=400)
+        
+        if break_duration < 1 or break_duration > 60:
+            return JsonResponse({'error': 'Break duration must be between 1 and 60 minutes'}, status=400)
+        
+        # Update durations
+        pomodoro.work_duration = work_duration
+        pomodoro.break_duration = break_duration
+        pomodoro.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Durations updated successfully',
+            'work_duration': work_duration,
+            'break_duration': break_duration
+        })
+        
+    except Pomodoro.DoesNotExist:
+        return JsonResponse({'error': 'Pomodoro not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
